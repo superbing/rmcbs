@@ -1,0 +1,38 @@
+<assembly xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/assembly-1.0.0.xsd">
+    <id>package</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <files>
+        <file>
+            <source>${project.build.directory}/rmcbs-pdf-img.jar</source>
+            <outputDirectory>lib</outputDirectory>
+        </file>
+    </files>
+    <fileSets>
+        <fileSet>
+            <directory>assemble/bin</directory>
+            <outputDirectory>/bin</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dependency</directory>
+            <outputDirectory>lib</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>conf</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>assemble/log</directory>
+            <outputDirectory>log</outputDirectory>
+        </fileSet>
+    </fileSets>
+    <!--   <dependencySets>
+           <dependencySet>
+               <outputDirectory>lib</outputDirectory>
+               <scope>runtime</scope>
+           </dependencySet>
+       </dependencySets>-->
+</assembly>

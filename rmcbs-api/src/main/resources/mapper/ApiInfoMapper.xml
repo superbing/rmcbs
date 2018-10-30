@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bfd.dao.mapper.ApiInfoMapper">
+  <resultMap id="BaseResultMap" type="com.bfd.bean.ApiInfoBean">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="api_type" jdbcType="BIGINT" property="apiType" />
+    <result column="url" jdbcType="VARCHAR" property="url" />
+    <result column="call_method" jdbcType="VARCHAR" property="callMethod" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="in_param" jdbcType="VARCHAR" property="inParam" />
+    <result column="out_param" jdbcType="VARCHAR" property="outParam" />
+    <result column="out_param_desc" jdbcType="VARCHAR" property="outParamDesc" />
+    <result column="call_example" jdbcType="VARCHAR" property="callExample" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="auth" jdbcType="INTEGER" property="auth" />
+    <result column="update_time" jdbcType="TIMESTAMP" javaType="java.util.Date" property="updateTime" />
+    <result column="create_time" jdbcType="TIMESTAMP" javaType="java.util.Date" property="createTime" />
+    <result column="create_user" jdbcType="BIGINT" property="createUser" />
+  </resultMap>
+
+  <resultMap id="ResultTreeMap" type="com.bfd.param.vo.ApiTreeVO">
+    <id column="id" property="id" />
+    <result column="typeName" property="typeName" />
+    <collection property="apiVOList" ofType="com.bfd.param.vo.ApiNamesVO">
+      <id column="apiId" property="apiId" />
+      <result column="apiName" property="apiName" />
+    </collection>
+  </resultMap>
+
+  <sql id="Example_Where_Clause">
+    <where>
+      1=1
+      <if test="id != null ">
+        and id = #{id}
+      </if>
+      <if test="name != null and name != '' ">
+        and name like CONCAT('%', #{name}, '%')
+      </if>
+      <if test="apiType != null and apiType != '' ">
+        and api_type = #{apiType}
+      </if>
+      <if test="url != null and url != '' ">
+        and url = #{url}
+      </if>
+    </where>
+  </sql>
+
+  <sql id="Base_Column_List">
+    id, name, api_type, url, call_method, description, in_param, out_param, out_param_desc, call_example,
+   	status, auth, update_time, create_time, create_user
+  </sql>
+
+  <select id="getApiTree" resultMap="ResultTreeMap">
+    select
+      tat.id AS id,
+      tat.type_name AS typeName,
+	  tai.id AS apiId,
+	  tai.name AS apiName
+    from
+      t_api_type tat LEFT JOIN t_api_info tai ON tat.id = tai.api_type
+    <if test="ids != null">
+      where tai.id in
+      <foreach collection="ids" item="id" separator="," open="(" close=")">
+        #{id}
+      </foreach>
+    </if>
+
+  </select>
+
+  <select id="findById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+     from t_api_info
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+</mapper>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.ColumnMapper">
+    <resultMap id="BaseResultMap" type="com.bfd.bean.PublicColumnBean">
+        <result column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="alias_name" property="aliasName"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="sort" property="sort"/>
+    </resultMap>
+
+	<sql id="Base_Column_List">
+		t_book_metadata.id AS id,
+		t_book_metadata.unique_id AS uniqueId,
+		t_book_metadata.book_name AS bookName,
+		t_book_metadata.author AS author,
+		t_book_metadata.responsible AS responsible,
+		t_book_metadata.press AS press,
+		t_book_metadata.publish_place AS publishPlace,
+		t_book_metadata.publish_date AS publishDate,
+		t_book_metadata.language AS language,
+		t_book_metadata.book_isbn AS bookIsbn,
+		t_book_metadata.keywords AS keywords,
+		t_book_metadata.content_summary AS contentSummary,
+		t_book_metadata.book_maker AS bookMaker,
+		t_book_metadata.make_time AS makeTime,
+		t_book_metadata.edit_order AS editOrder,
+		t_book_metadata.edit_order_year AS editOrderYear,
+		t_book_metadata.edit_order_month AS editOrderMonth,
+		t_book_metadata.print_order AS printOrder,
+		t_book_metadata.print_order_year AS printOrderYear,
+		t_book_metadata.print_order_month AS printOrderMonth,
+		t_book_metadata.book_size AS bookSize,
+		t_book_metadata.book_size_one AS bookSizeOne,
+		t_book_metadata.book_size_two AS bookSizeTwo,
+		t_book_metadata.word_count AS wordCount,
+		t_book_metadata.print_sheet AS printSheet,
+		t_book_metadata.binding_type AS bindingType,
+		t_book_metadata.pages_number AS pagesNumber,
+		t_book_metadata.editor AS editor,
+		t_book_metadata.price AS price,
+		t_book_metadata.book_category AS bookCategory,
+		t_book_metadata.author_brief AS authorBrief,
+		t_book_metadata.citation AS citation,
+		t_book_metadata.import_version AS importVersion,
+		t_book_metadata.origin_language AS originLanguage,
+		t_book_metadata.origin_book_name AS originBbookName,
+		t_book_metadata.translator AS translator,
+		t_book_metadata.book_pdf AS bookPdf,
+		t_book_metadata.page_num_pdf AS pageNumPdf,
+		t_book_metadata.book_epub AS bookEpub,
+		t_book_metadata.book_xml AS bookXml
+	</sql>
+
+    <select id="queryColumnList" resultMap="BaseResultMap">
+        SELECT
+          a.*
+        FROM t_column a
+        inner join t_business_column b on a.id=b.column_id
+        and b.business_id=#{businessId}
+    </select>
+
+	<select id="queryPcParentMetadataList" resultType="com.bfd.bean.BookBean">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM t_book_metadata,t_column_book
+		WHERE t_book_metadata.id = t_column_book.metadata_id
+		and t_book_metadata.book_pdf = 1
+		and t_column_book.column_id in (
+			select
+				t_column.id
+			from t_column
+			where t_column.parent_id=#{columnId}
+		)
+		<if test="order!=null and order!=''">
+			ORDER BY t_book_metadata.publish_date ${order}
+		</if>
+	</select>
+
+    <select id="queryPcMetadataList" resultType="com.bfd.bean.BookBean">
+        SELECT
+			<include refid="Base_Column_List" />
+        FROM t_book_metadata,t_column_book
+        WHERE t_book_metadata.id = t_column_book.metadata_id
+        and t_book_metadata.book_pdf = 1
+        and t_column_book.column_id = #{columnId}
+		<if test="order!=null and order!=''">
+			ORDER BY t_book_metadata.publish_date ${order}
+		</if>
+    </select>
+
+	<select id="queryAppParentMetadataList" resultType="com.bfd.bean.BookBean">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM t_book_metadata,t_column_book
+		WHERE t_book_metadata.id = t_column_book.metadata_id
+		and t_book_metadata.book_epub = 3
+		and t_column_book.column_id in (
+			select
+				t_column.id
+			from t_column
+			where t_column.parent_id=#{columnId}
+		)
+		<if test="order!=null and order!=''">
+			ORDER BY t_book_metadata.publish_date ${order}
+		</if>
+	</select>
+
+	<select id="queryAppMetadataList" resultType="com.bfd.bean.BookBean">
+        SELECT
+			<include refid="Base_Column_List" />
+        FROM t_book_metadata,t_column_book
+        WHERE t_book_metadata.id = t_column_book.metadata_id
+        and t_book_metadata.book_epub = 3
+        and t_column_book.column_id = #{columnId}
+		<if test="order!=null and order!=''">
+			ORDER BY t_book_metadata.publish_date ${order}
+		</if>
+    </select>
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bfd.dao.mapper.ApiTypeMapper">
+
+	<select id="queryApiType" parameterType="int" resultType="com.bfd.bean.ApiTypeBean">
+		SELECT id, 
+			   type_name AS typeName,
+			   url,
+			   status
+		  FROM t_api_type
+		 WHERE status = #{value}
+	</select>
+
+	<select id="getTypeById" resultType="com.bfd.bean.ApiTypeBean">
+		SELECT id,
+			   type_name AS typeName,
+			   url,
+			   status
+		  FROM t_api_type
+		 WHERE status = #{status} AND id = #{id}
+	</select>
+
+</mapper>

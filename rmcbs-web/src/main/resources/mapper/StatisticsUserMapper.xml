@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.StatisticsUserMapper">
+
+    <!--根据平台商id，统计栏目个数-->
+    <select id="getColumnTotal" resultType="int">
+        select count(0) from t_business_column where  business_id in
+        ( select id from t_company where parent_company_id = #{id} )
+    </select>
+
+    <!--根据平台商id，统计数据包个数-->
+    <select id="getDataPackageTotal" resultType="int">
+        select count(0) from t_business_data_package where  business_id in
+        ( select id from t_company where parent_company_id = #{id} )
+    </select>
+
+    <!--根据平台商id，统计客户单位个数-->
+    <select id="getCustomerTotal" resultType="int">
+        select count(0) from t_company where parent_company_id = #{id}
+    </select>
+
+    <!--根据平台商id，统计接口数-->
+    <select id="getApiTotal" resultType="int">
+        select count(0) from t_business_api where business_id in
+        ( select id from t_company where parent_company_id = #{id} ) or business_id = #{id}
+    </select>
+
+    <!--根据平台商id，获取客户单位列表-->
+    <select id="getCompanyList" resultType="map">
+        select id,
+        company_name as companyName,
+        company_type as companyType,
+        parent_company_id as parentCompanyId,
+        status as status
+        from t_company where parent_company_id = #{id}
+    </select>
+
+    <!--根据客户单位id，获取ip区间列表-->
+    <select id="getIpRangList" resultType="map">
+        select start_ip AS startIp, end_ip AS endIp from t_ip_range where business_id = #{id}
+    </select>
+
+</mapper>

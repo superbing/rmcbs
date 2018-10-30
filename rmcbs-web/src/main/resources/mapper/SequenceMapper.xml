@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.SequenceMapper">
+	<parameterMap type="map" id="sequenceMap">
+		<parameter property="name" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		<parameter property="nextval" jdbcType="BIGINT" javaType="java.math.BigInteger" mode="OUT" />
+	</parameterMap>
+
+	<select id="getNextVal" parameterMap="sequenceMap" statementType="CALLABLE">
+		{call p_nextval(?,?)}
+	</select>
+	
+	<select id="addSequenceName" parameterType="java.lang.String">
+		INSERT INTO t_sequence (name) values (#{name})
+	</select>
+</mapper>

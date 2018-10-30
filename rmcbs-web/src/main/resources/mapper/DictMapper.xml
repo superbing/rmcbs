@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.DictMapper" >
+    <resultMap id="BaseResultMap" type="com.bfd.bean.DictBean">
+        <result column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,
+        code,
+        name,
+        type
+    </sql>
+
+    <insert id="insert">
+        insert into t_dict(
+         code,
+         name,
+         type
+        )values
+        <foreach collection="dicts" item="dict" index="index" separator=",">
+        (
+        #{dict.code},
+        #{dict.name},
+        #{dict.type}
+        )
+    </foreach>
+    </insert>
+
+
+    <select id="getDict" resultType="com.bfd.bean.DictBean">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        t_dict
+        where
+        type = #{type}
+    </select>
+
+    <select id="getAuthorList" resultType="String">
+        SELECT DISTINCT author
+        FROM t_book_metadata
+        WHERE 1=1
+        order by CONVERT( author USING gbk )
+        COLLATE gbk_chinese_ci ASC
+    </select>
+
+
+</mapper>

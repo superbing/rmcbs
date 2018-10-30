@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.BusinessApiMapper" >
+    <resultMap id="BaseResultMap" type="com.bfd.bean.BusinessApiBean">
+        <result column="id" property="id"/>
+        <result column="api_id" property="apiId"/>
+        <result column="business_id" property="businessId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,
+        api_id,
+        business_id,
+        create_time
+    </sql>
+
+    <insert id="insert">
+        insert into t_business_api(
+         api_id,
+         business_id,
+         create_time
+        )values
+        <foreach collection="ids" item="id" index="index" separator=",">
+        (
+        #{id},
+        #{businessId},
+        now()
+        )
+    </foreach>
+    </insert>
+
+    <insert id="insertChildren">
+        insert into t_business_api(
+         api_id,
+         business_id
+        )values
+        <foreach collection="insertApiVOS" item="insertApiVO" index="index" separator=",">
+        (
+        #{insertApiVO.apiId},
+        #{insertApiVO.businessId}
+        )
+    </foreach>
+    </insert>
+
+    <delete id="delete">
+        delete
+        from t_business_api
+        where business_id in
+        <foreach collection="ids" item="id"  separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteChildren">
+        delete
+        from t_business_api
+        where api_id in
+        <foreach collection="apiIds" item="apiId"  separator="," open="(" close=")">
+            #{apiId}
+        </foreach>
+        AND
+        business_id in
+        <foreach collection="businessIds" item="businessId"  separator="," open="(" close=")">
+            #{businessId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteBusinessApi">
+        delete
+        from t_business_api
+        where
+        <foreach collection="apiIds" item="apiId" index="index" separator="or">
+            ( api_id = #{apiId}
+              and
+             business_id = #{businessId})
+        </foreach>
+
+    </delete>
+
+    <delete id="deleteOne">
+        delete
+        from t_business_api
+        where business_id = #{id} AND api_id = #{apiId}
+    </delete>
+
+
+    <select id="getById" resultMap="BaseResultMap">
+        SELECT
+          <include refid="Base_Column_List"/>
+        FROM
+        t_business_api
+        where
+        business_id = #{businessId}
+    </select>
+
+    <select id="queryAuth" resultType="com.bfd.bean.AuthBean">
+      SELECT
+        t_api_info.id AS apiId,
+        t_api_info.url,
+        t_api_info.api_type AS apiType,
+        t_business_api.business_id AS businessId
+      FROM t_api_info
+      LEFT JOIN t_business_api
+      ON t_api_info.id = t_business_api.api_id
+      and t_business_api.business_id = #{businessId}
+      where t_api_info.status = 1
+    </select>
+
+    <select id="getByApiId" parameterType="long" resultType="long">
+        SELECT
+	        tba.business_id
+        FROM
+            t_business_api tba
+        LEFT JOIN t_company tc ON tba.business_id = tc.id
+        WHERE
+            api_id = #{apiId} AND tc.parent_company_id != 0
+    </select>
+
+</mapper>

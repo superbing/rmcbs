@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.BusinessColumnMapper" >
+    <resultMap id="BaseResultMap" type="com.bfd.bean.BusinessColumnBean">
+        <result column="id" property="id"/>
+        <result column="column_id" property="columnId"/>
+        <result column="business_id" property="businessId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,
+        column_id,
+        business_id,
+        create_time
+    </sql>
+
+    <insert id="insert">
+        insert into t_business_column(
+         column_id,
+         business_id
+        )values
+        <foreach collection="ids" item="id" index="index" separator=",">
+        (
+        #{id},
+        #{businessId}
+        )
+    </foreach>
+    </insert>
+
+    <delete id="delete">
+        delete
+        from t_business_column
+        where business_id in
+        <foreach collection="ids" item="id"  separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <select id="getById" resultType="Long">
+        SELECT
+        column_id
+        FROM
+        t_business_column
+        where
+        business_id = #{businessId}
+    </select>
+
+</mapper>

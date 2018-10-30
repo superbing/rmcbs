@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.CompanyMapper" >
+    <resultMap id="BaseResultMap" type="com.bfd.bean.CompanyBean">
+        <result column="id" property="id"/>
+        <result column="company_code" property="companyCode"/>
+        <result column="company_name" property="companyName"/>
+        <result column="company_type" property="companyType"/>
+        <result column="parent_company_id" property="parentCompanyId"/>
+        <result column="registration_place" property="registrationPlace"/>
+        <result column="company_description" property="companyDescription"/>
+        <result column="business_model" property="businessModel"/>
+        <result column="status" property="status"/>
+        <result column="access_key" property="accessKey"/>
+        <result column="extra_data" property="extraData"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="create_user" property="createUser"/>
+        <result column="drm_encrypt" property="drmEncrypt"/>
+    </resultMap>
+
+    <resultMap id="ResultTreeMap" type="com.bfd.param.vo.edgesighvo.CompanyTreeDTO">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <collection property="companyTreeVOS" ofType="com.bfd.param.vo.edgesighvo.CompanyTreeVO">
+            <id column="BusinessId" property="id" />
+            <result column="BusinessName" property="name" />
+        </collection>
+    </resultMap>
+
+    <resultMap id="ResultIdTreeMap" type="com.bfd.param.vo.edgesighvo.CompanyTreeDTO">
+        <id column="id" property="id" />
+        <collection property="companyTreeVOS" ofType="com.bfd.param.vo.edgesighvo.CompanyTreeVO">
+            <id column="BusinessId" property="id" />
+        </collection>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,company_code,company_name,company_type,parent_company_id,registration_place,company_description,
+        business_model,status,access_key,extra_data,update_time,update_user, create_time,create_user
+    </sql>
+    
+    <sql id="Base_Column_alias">
+        t.id AS id,
+        t.company_code AS companyCode,
+        t.company_name AS companyName,
+        t.company_type AS companyType,
+        t.parent_company_id AS parentCompanyId,
+        tc.company_name AS parentCompanyName,
+        t.registration_place AS registrationPlace,
+        t.company_description AS companyDescription,
+        t.business_model AS businessModel,
+        t.status AS status,
+        t.access_key AS accessKey,
+        t.update_time AS updateTime,
+        t.create_time AS createTime
+    </sql>
+
+    <select id="getCompanyTree" resultMap="ResultTreeMap">
+        SELECT
+            tc1.id AS id,
+            tc1.company_name As name,
+            tc2.id AS BusinessId,
+            tc2.company_name AS BusinessName
+        FROM
+            t_company tc1
+        LEFT JOIN t_company tc2 ON tc1.id = tc2.parent_company_id
+        WHERE tc1.parent_company_id = 0
+    </select>
+
+    <select id="getCompanyIdTree" resultMap="ResultIdTreeMap">
+        SELECT
+            tc1.id AS id,
+            tc2.id AS BusinessId
+        FROM
+            t_company tc1
+        LEFT JOIN t_company tc2 ON tc1.id = tc2.parent_company_id
+        WHERE tc1.parent_company_id = 0 AND tc1.id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="getDeveloperQuery" resultType="com.bfd.param.vo.statisticsuser.DeveloperQueryVO">
+        SELECT
+        t1.id AS id,
+        t1.company_name AS companyName,
+        t2.customerNumber AS customerNumber,
+        tbu.terminalProportion AS terminalProportion,
+        tbu.ipNum AS ipNum,
+        IFNULL(tba.apiNum,0) AS apiNum
+        FROM
+        t_company t1
+        LEFT JOIN (
+        SELECT
+        tc1.id AS id,
+        COUNT(tc2.id) AS customerNumber
+        FROM
+        t_company tc1
+        LEFT JOIN t_company tc2 ON tc1.id = tc2.parent_company_id
+        GROUP BY
+        tc1.id
+        ) t2 ON t1.id = t2.id
+        LEFT JOIN (
+        SELECT
+        t1.id AS business_id,
+        IFNULL(SUM(terminal), 0) AS terminalProportion,
+        IFNULL(SUM(ip_status), 0) AS ipNum
+        FROM
+        t_company t1
+        LEFT JOIN t_company t2 ON t2.parent_company_id = t1.id
+        LEFT JOIN t_business_units t3 ON t3.business_id = t2.id
+        GROUP BY
+        t1.id
+        ) tbu ON tbu.business_id = t2.id
+        LEFT JOIN (
+        SELECT
+        t2.parent_company_id AS parent_company_id,
+        COUNT(
+        DISTINCT t3.api_id) AS apiNum
+        FROM
+        `t_business_units` t1
+        LEFT JOIN t_company t2 ON t1.business_id = t2.id
+        LEFT JOIN t_business_api t3 ON t1.business_id = t3.business_id
+        GROUP BY
+        t2.parent_company_id
+        ) tba ON tba.parent_company_id = t1.id
+        WHERE t1.parent_company_id = 0
+        <if test="companyName != null and companyName != ''">
+            AND t1.company_name like CONCAT('%', #{companyName}, '%')
+        </if>
+        GROUP BY t1.id
+        ORDER by t1.create_time desc
+    </select>
+
+    <select id="getCustomerQuery" resultType="com.bfd.param.vo.statisticsuser.CustomerQueryVO">
+        SELECT
+            t.id AS id,
+            t.company_name AS companyName,
+            IFNULL(tbu.concurrence, 0) AS concurrence,
+            IFNULL(tbu.terminal, 0) AS terminalProportion,
+            tbu.start_time AS startTime,
+            tbu.end_time AS endTime,
+            IFNULL(COUNT(tba.id), 0) AS apiNum,
+            tir.ipNum AS ipNum,
+            t.create_time AS createTime
+        FROM
+            t_company t
+        LEFT JOIN t_business_units tbu ON t.id = tbu.business_id
+        LEFT JOIN t_business_api tba ON t.id = tba.business_id
+        LEFT JOIN (
+            SELECT
+                t.id AS id,
+                IFNULL(COUNT(tir.business_id), 0) AS ipNum
+            FROM
+                t_company t
+            LEFT JOIN t_ip_range tir ON t.id = tir.business_id
+            GROUP BY
+                t.id
+        ) tir ON t.id = tir.id
+        WHERE
+            t.parent_company_id = #{id}
+            <if test="companyName != null and companyName != ''">
+                AND t.company_name = #{companyName}
+            </if>
+        GROUP BY
+            t.id
+    </select>
+
+    <select id="getDevelopersList" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM t_company
+        where
+            parent_company_id = #{isDevelopers}
+        ORDER BY create_time desc
+    </select>
+
+    <select id="getDevelopersPage" resultType="com.bfd.bean.CompanyBean">
+        SELECT
+        tc1.id AS id,
+        tc1.company_code AS companyCode,
+        tc1.company_name AS companyName,
+        tc1.company_type AS companyType,
+        tc1.parent_company_id AS parentCompanyId,
+        tc1.registration_place AS registrationPlace,
+        COUNT(tc2.id) AS customerNumber,
+        tc1.company_description AS companyDescription,
+        tc1.business_model AS businessModel,
+        tc1.status AS status,
+        tc1.access_key AS accessKey,
+        tc1.update_time AS updateTime,
+        tc1.create_time AS createTime
+        FROM
+        t_company tc1
+        LEFT JOIN t_company tc2 ON tc1.id = tc2.parent_company_id
+        WHERE
+            tc1.parent_company_id = #{isDevelopers}
+            <if test="companyId != null and companyId != ''">
+                AND tc1.parent_company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != '' ">
+                AND tc1.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+        GROUP BY tc1.id
+        ORDER BY ${sortField} ${sortType}
+    </select>
+
+    <select id="getCustomerList" resultType="com.bfd.bean.CompanyBean">
+        SELECT
+	        <include refid="Base_Column_alias"/>
+        FROM
+            `t_company` t
+        LEFT JOIN `t_company` tc ON t.parent_company_id = tc.id
+        WHERE
+	        <![CDATA[t.parent_company_id <> #{isDevelopers}]]>
+            <if test="companyId != null and companyId != ''">
+                AND t.parent_company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != '' ">
+                AND t.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="companyCode != null and companyCode!= '' ">
+            	AND t.company_code like CONCAT(#{companyCode},'%')
+            </if>
+        ORDER BY ${sortField} ${sortType}
+    </select>
+
+    <select id="getCustomerByName" parameterType="string" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_company
+        WHERE company_name = #{name} AND parent_company_id != 0
+    </select>
+
+    <select id="getDeveloperByName" parameterType="string" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_company
+        WHERE company_name = #{name} AND parent_company_id = 0
+    </select>
+
+    <select id="getCustomerTotal" resultType="Long">
+        SELECT
+	        count(0)
+        FROM
+            `t_company` t
+        WHERE
+            t.parent_company_id != 0
+    </select>
+
+    <select id="getCompanyById" resultType="com.bfd.bean.CompanyBean">
+        SELECT
+            t.id AS id,
+            t.company_code AS companyCode,
+            t.company_name AS companyName,
+            t.company_type AS companyType,
+            t.parent_company_id AS parentCompanyId,
+            t.registration_place AS registrationPlace,
+            t.company_description AS companyDescription,
+            t.business_model AS businessMmodel,
+            t.STATUS AS status,
+            t.access_key AS accessKey,
+            t.extra_data AS extraData,
+            t.update_time AS updateTime,
+            tu1.account AS updateUser,
+            t.create_time AS createTime,
+            tu2.account AS createUser
+        FROM
+            t_company t
+        LEFT JOIN t_user tu1 ON t.update_user = tu1.id
+        LEFT JOIN t_user tu2 ON t.create_user = tu2.id
+        where t.id = #{id}
+    </select>
+
+    <select id="getCustomerById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_company
+        where parent_company_id = #{id}
+    </select>
+
+
+    <select id="getCustomersName" resultType="com.bfd.param.vo.statisticsuser.CustomerNameVO">
+        SELECT
+            id,
+            company_name AS companyName
+        FROM t_company
+        where parent_company_id = #{id}
+    </select>
+    
+    <update id="update" parameterType="com.bfd.bean.CompanyBean">
+        update t_company
+        <trim prefix="set" suffixOverrides=",">
+            <if test="companyName!=null and companyName != '' ">
+                company_name = #{companyName},
+            </if>
+             <if test="companyCode !=null and companyCode != '' ">
+                company_code = #{companyCode},
+            </if>
+            <if test="companyType != null and companyType != '' ">
+                company_type = #{companyType},
+            </if>
+            <if test="parentCompanyId != null and parentCompanyId != '' ">
+                parent_company_id = #{parentCompanyId},
+            </if>
+            <if test="registrationPlace!=null and registrationPlace!= '' ">
+                registration_place = #{registrationPlace},
+            </if>
+            <if test="companyDescription !=null and companyDescription!= '' ">
+                company_description = #{companyDescription},
+            </if>
+            <if test="businessModel !=null and businessModel!= '' ">
+                business_model = #{businessModel},
+            </if>
+            <if test="status!=null ">
+           	 	status = #{status},
+            </if>
+            <if test="accessKey !=null and accessKey != '' ">
+                access_key = #{accessKey},
+            </if>
+            <if test="drmEncrypt != null ">
+                drm_encrypt = #{drmEncrypt},
+            </if>
+            <if test="extraData != null ">
+                extra_data = #{extraData},
+            </if>
+            <if test="updateUser != null ">
+                update_user = #{updateUser},
+            </if>
+            update_time = now()
+        </trim>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <update id="updateStatus">
+        update t_company
+           set status = #{status},
+               update_user = #{updateUser},
+               update_time = now()
+         where id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="delete">
+        delete from t_company where id = #{id}
+    </delete>
+
+    <delete id="deleteCustomers">
+        delete from t_company
+         where id in
+        <foreach collection="List" item="companyBean"  separator="," open="(" close=")">
+            #{companyBean.id}
+        </foreach>
+    </delete>
+
+    <select id="getParentStatus" resultType="int">
+        SELECT
+	        t1.status
+        FROM
+            t_company t
+        LEFT JOIN t_company t1 on t.parent_company_id = t1.id
+        WHERE
+            t.id = #{id}
+    </select>
+
+    <select id="getCompanyByCompanyCodes" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        from t_company
+         where company_code in
+        <foreach collection="CompanyCodes" item="CompanyCode"  separator="," open="(" close=")">
+            #{CompanyCode}
+        </foreach>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_company(
+        	company_code,
+            company_name,
+            company_type,
+            parent_company_id,
+            registration_place,
+            company_description,
+            business_model,
+            status,
+            access_key,
+            extra_data,
+            update_user,
+            create_user,
+            update_time,
+            create_time
+        )
+        VALUES(
+        	#{companyCode},
+            #{companyName},
+            #{companyType},
+            #{parentCompanyId},
+            #{registrationPlace},
+            #{companyDescription},
+            #{businessModel},
+            #{status},
+            #{accessKey},
+            #{extraData},
+            #{updateUser},
+            #{createUser},
+            now(),
+            now()
+        )
+    </insert>
+
+    <select id="getCompany" resultType="com.bfd.bean.CompanyBean" parameterType="com.bfd.param.vo.CompanyVO">
+        SELECT
+            <include refid="Base_Column_alias"/>
+        FROM
+        `t_company` t
+        LEFT JOIN `t_company` tc ON t.parent_company_id = tc.id
+        <where>
+            <if test="companyId != null and companyId != ''">
+                AND parent_company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != '' ">
+                AND company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="isDevelopers == null">
+                 <![CDATA[AND parent_company_id <> #{isDevelopers}]]>
+            </if>
+            <if test="isDevelopers != null and isDevelopers != '' ">
+                AND parent_company_id = #{isDevelopers}
+            </if>
+        </where>
+    </select>
+    
+    <!-- 根据accessKey更新离线包，dowloaded为1表示该客户已经下过了离线数据 -->
+	<update id="updateCompanyByAccessKey" parameterType="com.bfd.bean.CompanyBean">
+        UPDATE t_company
+		<trim prefix="set" suffixOverrides=",">
+            <if test="drmEncrypt !=null">
+                drm_encrypt = #{drmEncrypt},
+            </if>
+           <if test="downloaded !=null">
+                downloaded = #{downloaded},
+            </if>
+       		   update_time = now()
+		</trim>
+         WHERE access_key = #{accessKey}
+    </update>
+
+    <!-- 根据companyCode查询客户单位 -->
+    <select id="getCompanyByCode" parameterType="string" resultType="com.bfd.bean.CompanyBean">
+      SELECT id
+        FROM t_company
+       WHERE company_code = #{value}
+    </select>
+    
+    <!-- 根据access_key查询 -->
+    <select id="getByAccessKey" parameterType="string" resultType="com.bfd.bean.CompanyBean">
+		SELECT t.id AS id,
+			   t.company_code AS companyCode,
+			   t.company_name AS companyName,
+			   t.company_type AS companyType,
+			   t.parent_company_id AS parentCompanyId,
+			   t.registration_place AS registrationPlace,
+			   t.company_description AS companyDescription,
+			   t.business_model AS businessModel,
+			   t.status AS status,
+			   t.access_key AS accessKey,
+			   t.update_time AS updateTime,
+			   t.create_time AS createTime
+		  FROM t_company t
+		 WHERE t.access_key = #{value}
+    </select>
+    
+</mapper>

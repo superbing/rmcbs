@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.UserMapper" >
+
+	<resultMap id="BaseResultMap" type="com.bfd.bean.UserBean">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="account" jdbcType="VARCHAR" property="account" />
+		<result column="password" jdbcType="VARCHAR" property="password" />
+		<result column="enabled" jdbcType="TINYINT" property="enabled" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="remark" jdbcType="VARCHAR" property="remark" />
+		<result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+		<result column="create_user" jdbcType="BIGINT" property="createUser" />
+		<result column="last_time" jdbcType="TIMESTAMP" property="lastTime" />
+		<result column="last_ip" jdbcType="VARCHAR" property="lastIp" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+    id, account, password, enabled, name, remark, create_time, create_user, last_time,last_ip
+  	</sql>
+
+	<sql id="Base_Column_Where">
+		<where>
+			1=1
+			<if test="account != null">
+				and account = #{account,jdbcType=VARCHAR}
+			</if>
+			<if test="password != null">
+				and password = #{password,jdbcType=VARCHAR}
+			</if>
+			<if test="enabled != null">
+				and enabled = #{enabled,jdbcType=TINYINT}
+			</if>
+			<if test="remark != null">
+				and remark = #{remark,jdbcType=VARCHAR}
+			</if>
+			<if test="createUser != null">
+				and create_user = #{createUser,jdbcType=BIGINT}
+			</if>
+		</where>
+	</sql>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.bfd.bean.UserBean">
+    insert into t_user (id, account, password,
+      enabled, name, remark,
+      create_time, create_user, last_time,
+      last_ip)
+    values (#{id,jdbcType=BIGINT}, #{account,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR},
+      #{enabled,jdbcType=TINYINT}, #{name,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR},
+      now(), #{createUser,jdbcType=BIGINT}, #{lastTime,jdbcType=TIMESTAMP},
+      #{lastIp,jdbcType=VARCHAR})
+  	</insert>
+
+	<update id="update" parameterType="com.bfd.bean.UserBean">
+	update t_user
+	<set>
+		<if test="account != null">
+			account = #{account,jdbcType=VARCHAR},
+		</if>
+		<if test="password != null">
+			password = #{password,jdbcType=VARCHAR},
+		</if>
+		<if test="enabled != null">
+			enabled = #{enabled,jdbcType=TINYINT},
+		</if>
+		<if test="name != null">
+			name = #{name,jdbcType=VARCHAR},
+		</if>
+		<if test="remark != null">
+			remark = #{remark,jdbcType=VARCHAR},
+		</if>
+		<if test="createTime != null">
+			create_time = #{createTime,jdbcType=TIMESTAMP},
+		</if>
+		<if test="createUser != null">
+			create_user = #{createUser,jdbcType=BIGINT},
+		</if>
+		<if test="lastTime != null">
+			last_time = #{lastTime,jdbcType=TIMESTAMP},
+		</if>
+		<if test="lastIp != null">
+			last_ip = #{lastIp,jdbcType=VARCHAR},
+		</if>
+	</set>
+	where id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<delete id="delete" parameterType="java.lang.Long">
+    delete from t_user
+    where id = #{id,jdbcType=BIGINT}
+    and account!='admin'
+  	</delete>
+
+	<select id="findById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from t_user
+		where id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<select id="findByAccount" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from t_user
+		where account = #{account}
+	</select>
+
+
+	<select id="queryList" resultType="com.bfd.param.vo.UserBeanVO">
+		SELECT
+		tu.id AS id,
+		tu.account AS account,
+		tu. PASSWORD AS PASSWORD,
+		tu.enabled AS enabled,
+		tu. NAME AS NAME,
+		tu.remark AS remark,
+		tu.create_time AS createTime,
+		tu.create_user AS createUser,
+		tu.last_time AS lastTime,
+		tu.last_ip AS lastIp,
+		tur.role_id AS roleId,
+		tr.`name` AS roleName
+		FROM
+		t_user tu
+		LEFT JOIN t_user_role tur ON tur.user_id = tu.id
+		LEFT JOIN t_role tr ON tr.id = tur.role_id
+		where
+		1=1
+		<if test="account != null">
+			and account like CONCAT('%', #{account}, '%')
+		</if>
+		ORDER BY tu.create_time desc
+	</select>
+
+	<insert id="addUserRole">
+		insert into t_user_role (user_id, role_id)
+		values (#{userId,jdbcType=BIGINT}, #{roleId,jdbcType=BIGINT})
+  	</insert>
+
+	<delete id="delUserRole" parameterType="java.lang.Long">
+		delete from t_user_role
+		where user_id = #{userId,jdbcType=BIGINT}
+  	</delete>
+</mapper>

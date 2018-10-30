@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.MetadataMapper" >
+
+	<!--图书设置展示界面的resultMap-->
+	<resultMap id="BaseResultMap" type="com.bfd.param.vo.MetadataSetVO">
+		<result column="id" property="id"/>
+		<result column="unique_id" property="uniqueId"/>
+		<result column="book_name" property="bookName"/>
+	</resultMap>
+
+	<select id="getMetadataTotal" resultType="Long">
+		SELECT COUNT(0) FROM `t_book_metadata`;
+	</select>
+
+	<!--图书设置展示界面List-->
+	<select id="getBookOptionsList" resultMap="BaseResultMap">
+        SELECT
+	      t.id AS id,
+	      t.unique_id AS unique_id,
+	      t.book_name AS book_name,
+	      t.author AS author,
+	      t.publish_date AS publishDate,
+	      t.book_isbn AS bookIsbn,
+	      t.press AS press,
+		  t.book_pdf AS bookPdf,
+		  t.book_epub AS bookEpub,
+		  t.book_xml AS bookXml,
+		  t.book_xml_chapter AS bookXmlChapter
+        FROM
+            `t_book_metadata` t
+		<where>
+			<if test="uniqueId != null and uniqueId != ''">
+				AND t.unique_id like CONCAT(#{uniqueId},'%')
+			</if>
+			<if test="bookIsbn != null and bookIsbn != ''">
+				AND t.book_isbn like CONCAT(#{bookIsbn},'%')
+			</if>
+			<if test="bookName != null and bookName != '' ">
+				AND t.book_name like CONCAT('%',#{bookName},'%')
+			</if>
+			<if test="BookStatus == '4'.toString()">
+				AND t.book_pdf = '0' AND t.book_epub = '0' AND t.book_xml = '0'
+			</if>
+			<if test="BookStatus == '1'.toString()">
+				AND t.book_pdf = '1'
+			</if>
+			<if test="BookStatus == '2'.toString()">
+				AND t.book_epub = '3'
+			</if>
+			<if test="BookStatus == '3'.toString()">
+				AND t.book_xml = '1'
+			</if>
+		</where>
+		GROUP BY id
+		ORDER BY  t.${sortField} ${sortType}
+    </select>
+
+	<select id="getColumnNames" resultType="com.bfd.bean.ColumnBean">
+		SELECT
+			DISTINCT tc1.`name` AS name,
+			tcb.metadata_id AS id
+		FROM
+			t_column_book tcb
+			LEFT JOIN t_column tc ON tc.id = tcb.column_id
+			LEFT JOIN t_column tc1 ON tc.parent_id = tc1.id
+		WHERE tcb.metadata_id in
+		<foreach collection="list" item="m"  separator="," open="(" close=")">
+			#{m.id}
+		</foreach>
+	</select>
+
+	<select id="getPackageNames" resultType="com.bfd.bean.DataPackageBean">
+		SELECT
+			DISTINCT td1.`name` AS name,
+			tdb.metadata_id AS id
+		FROM
+			t_data_package_book tdb
+			LEFT JOIN t_data_package td ON td.id = tdb.data_package_id
+			LEFT JOIN t_data_package td1 ON	td.parent_id = td1.id
+		WHERE tdb.metadata_id in
+		<foreach collection="list" item="m"  separator="," open="(" close=")">
+			#{m.id}
+		</foreach>
+	</select>
+
+	<select id="addMetadata" parameterType="com.bfd.bean.MetadataBean">
+		INSERT INTO t_book_metadata (
+			unique_id,
+			book_name,
+			author,
+			responsible,
+			press,
+			publish_place,
+			publish_date,
+			language,
+			book_isbn,
+			keywords,
+			content_summary,
+			book_maker,
+			make_time,
+			edit_order,
+			edit_order_year,
+			edit_order_month,
+			print_order,
+			print_order_year,
+			print_order_month,
+			book_size,
+			book_size_one,
+			book_size_two,
+			word_count,
+			print_sheet,
+			binding_type,
+			pages_number,
+			editor,
+			price,
+			book_category,
+			author_brief,
+			citation,
+			import_version,
+			origin_language,
+			origin_book_name,
+			translator,
+			update_user,
+			create_user,
+			create_time
+		)
+		VALUES(
+			#{uniqueId},
+			#{bookName},
+			#{author},
+			#{responsible},
+			#{press},
+			#{publishPlace},
+			#{publishDate},
+			#{language},
+			#{bookIsbn},
+			#{keywords},
+			#{contentSummary},
+			#{bookMaker},
+			#{makeTime},
+			#{editOrder},
+			#{editOrderYear},
+			#{editOrderMonth},
+			#{printOrder},
+			#{printOrderYear},
+			#{printOrderMonth},
+			#{bookSize},
+			#{bookSizeOne},
+			#{bookSizeTwo},
+			#{wordCount},
+			#{printSheet},
+			#{bindingType},
+			#{pagesNumber},
+			#{editor},
+			#{price},
+			#{bookCategory},
+			#{authorBrief},
+			#{citation},
+			#{importVersion},
+			#{originLanguage},
+			#{originBookName},
+			#{translator},
+			#{updateUser},
+			#{createUser},
+			now()
+		)
+	</select>
+	
+	<update id="updateMetadata" parameterType="com.bfd.bean.MetadataBean">
+		UPDATE t_book_metadata 
+		<trim prefix="set" suffixOverrides=",">
+			<if test="bookName != null and bookName != '' ">
+				book_name = #{bookName},
+			</if>
+       		<if test="author != null and author != '' ">
+				author = #{author},
+			</if>
+       		<if test="responsible != null and responsible != '' ">
+				responsible = #{responsible},
+			</if>
+			<if test="press != null and press != '' ">
+				press = #{press},
+			</if>
+       		<if test="publishPlace != null and publishPlace != '' ">
+				publish_place = #{publishPlace},
+			</if>
+			<if test="publishDate != null and publishDate != '' ">
+				publish_date = #{publishDate},
+			</if>
+			<if test="language != null and language != '' ">
+				language = #{language},
+			</if>
+			<if test="bookIsbn != null and bookIsbn != '' ">
+				book_isbn = #{bookIsbn},
+			</if>
+			<if test="keywords != null and keywords != '' ">
+				keywords = #{keywords},
+			</if>
+			<if test="contentSummary != null and contentSummary != '' ">
+				content_summary = #{contentSummary},
+			</if>
+			<if test="bookMaker != null and bookMaker != '' ">
+				book_maker = #{bookMaker},
+			</if>
+       		<if test="makeTime != null and makeTime != '' ">
+       			make_time = #{makeTime},
+       		</if>
+       		<if test="editOrder != null">
+				edit_order = #{editOrder},
+			</if>
+			<if test="editOrderYear != null">
+				edit_order_year = #{editOrderYear},
+			</if>
+			<if test="editOrderMonth != null">
+				edit_order_month = #{editOrderMonth},
+			</if>
+			<if test="printOrder != null">
+				print_order = #{printOrder},
+			</if>
+			<if test="printOrderYear != null">
+				print_order_year = #{printOrderYear},
+			</if>
+			<if test="printOrderMonth != null">
+				print_order_month = #{printOrderMonth},
+			</if>
+			<if test="bookSize != null">
+				book_size = #{bookSize},
+			</if>
+			<if test="bookSizeOne != null">
+				book_size_one = #{bookSizeOne},
+			</if>
+			<if test="bookSizeTwo != null">
+				book_size_two = #{bookSizeTwo},
+			</if>
+			<if test="wordCount != null">
+				word_count = #{wordCount},
+			</if>
+			<if test="printSheet != null">
+				print_sheet = #{printSheet},
+			</if>
+			<if test="bindingType != null">
+				binding_type = #{bindingType},
+			</if> 
+			<if test="pagesNumber != null">
+				pages_number = #{pagesNumber},
+			</if>
+			<if test="editor != null">
+				editor = #{editor},
+			</if>
+			<if test="price != null">
+				price = #{price},
+			</if>
+			<if test="bookCategory != null">
+				book_category = #{bookCategory},
+			</if>
+			<if test="authorBrief != null">
+				author_brief = #{authorBrief},
+			</if>
+			<if test="citation != null">
+				citation = #{citation},
+			</if>
+			<if test="importVersion != null and importVersion != '' ">
+				import_version = #{importVersion},
+			</if>
+			<if test="originLanguage != null and originLanguage != '' ">
+				origin_language = #{originLanguage},
+			</if>
+			<if test="originBookName != null and originBookName != '' ">
+				origin_book_name = #{originBookName},
+			</if>
+			<if test="translator!=null and translator!= '' ">
+				translator = #{translator},
+			</if>
+			<if test="pageNumPdf != null">
+				page_num_pdf = #{pageNumPdf},
+			</if>
+			<if test="bookPdf != null and bookPdf != '' ">
+				book_pdf = #{bookPdf},
+			</if>
+			<if test="bookXml != null and bookXml != '' ">
+				book_xml = #{bookXml},
+			</if>
+			<if test="bookEpub != null and bookEpub != '' ">
+				book_epub = #{bookEpub},
+			</if>
+			<if test="bookXmlChapter != null and bookXmlChapter != '' ">
+				book_xml_chapter = #{bookXmlChapter},
+			</if>
+			<if test="updateUser != null">
+				update_user = #{updateUser},
+			</if>
+			update_time = now()
+		</trim>
+		<where>
+			unique_id = #{uniqueId}
+		</where>
+	</update>
+	
+	<select id="getMetaByUniqueId" parameterType="string" resultType="com.bfd.bean.MetadataBean">
+		SELECT
+			m.id AS id,
+			m.unique_id AS uniqueId,
+			m.book_name AS bookName,
+			m.author AS author,
+			m.responsible AS responsible,
+			m.press AS press,
+			m.publish_place AS publishPlace,
+			m.publish_date AS publishDate,
+			m.LANGUAGE AS LANGUAGE,
+			m.book_isbn AS bookIsbn,
+			m.keywords AS keywords,
+			m.content_summary AS contentSummary,
+			m.book_maker AS bookMaker,
+			m.make_time AS makeTime,
+			m.edit_order AS editOrder,
+			m.edit_order_year AS editOrderYear,
+			m.edit_order_month AS editOrderMonth,
+			m.print_order AS printOrder,
+			m.print_order_year AS printOrderYear,
+			m.print_order_month AS printOrderMonth,
+			m.book_size AS bookSize,
+			m.book_size_one AS bookSizeOne,
+			m.book_size_two AS bookSizeTwo,
+			m.word_count AS wordCount,
+			m.print_sheet AS printSheet,
+			m.binding_type AS bindingType,
+			m.pages_number AS pagesNumber,
+			m.editor AS editor,
+			m.price AS price,
+			m.book_category AS bookCategory,
+			m.author_brief AS authorBrief,
+			m.citation AS citation,
+			m.import_version AS importVersion,
+			m.origin_language AS originLanguage,
+			m.origin_book_name AS originBookName,
+			m.translator AS translator,
+			m.book_pdf AS bookPdf,
+			m.book_epub AS bookEpub,
+			m.book_xml AS bookXml,
+			m.book_xml_chapter AS bookXmlChapter,
+			u1.account AS updateUser,
+			m.update_time AS updateTime,
+			u2.account AS createUser,
+			m.create_time AS createTime
+		FROM
+			t_book_metadata m
+		LEFT JOIN t_user u1 ON m.update_user = u1.id
+		LEFT JOIN t_user u2 ON m.create_user = u2.id
+		  <where>
+		  	unique_id = #{value}
+		  </where>
+	</select>
+	
+	<select id="getMeta" parameterType="com.bfd.param.vo.MetadataVO" resultType="com.bfd.bean.MetadataBean">
+		SELECT id AS id,
+			   unique_id AS uniqueId,
+			   book_name AS bookName,
+			   author AS author,
+			   responsible AS responsible,
+			   press AS press,
+			   publish_place AS publishPlace,
+			   publish_date AS publishDate,
+			   language AS language,
+			   book_isbn AS bookIsbn,
+			   book_pdf AS bookPdf,
+			   book_epub AS bookEpub,
+			   book_xml AS bookXml,
+			   book_xml_chapter AS bookXmlChapter
+		  FROM t_book_metadata
+		  <where>
+		  	  <if test="uniqueId != null and uniqueId != ''">
+		  		  AND unique_id like CONCAT(#{uniqueId},'%')
+		  	  </if>
+			  <if test="startTime !=null and startTime != '' ">
+				  <![CDATA[ AND publish_date BETWEEN #{startTime} AND #{endTime}]]>
+			  </if>
+			  <if test="bookName != null and bookName != '' ">
+				  AND book_name like CONCAT('%',#{bookName}, '%')
+			  </if>
+			  <if test="bookIsbn != null and bookIsbn != '' ">
+				  AND book_isbn like CONCAT(#{bookIsbn}, '%')
+			  </if>
+			  <if test="BookStatus == '4'.toString()">
+				  AND book_pdf = '0' AND book_epub = '0' AND book_xml = '0'
+			  </if>
+			  <if test="BookStatus == '1'.toString()">
+                AND book_pdf = '1'
+			  </if>
+		      <if test="BookStatus == '2'.toString()">
+				AND book_epub = '3'
+		      </if>
+		      <if test="BookStatus == '3'.toString()">
+				AND book_xml = '1'
+		      </if>
+			  <if test="bookPdf != null and bookPdf != '' ">
+				  AND book_pdf = #{bookPdf}
+			  </if>
+		  </where>
+		  ORDER BY  ${sortField} ${sortType}
+	</select>
+
+	<select id="getMetaLimit" parameterType="com.bfd.param.vo.MetadataVO" resultType="com.bfd.bean.MetadataBean">
+		SELECT id AS id,
+		unique_id AS uniqueId,
+		book_name AS bookName,
+		author AS author,
+		responsible AS responsible,
+		press AS press,
+		publish_place AS publishPlace,
+		publish_date AS publishDate,
+		language AS language,
+		book_isbn AS bookIsbn,
+		book_pdf AS bookPdf,
+		book_epub AS bookEpub,
+		book_xml AS bookXml,
+		book_xml_chapter AS bookXmlChapter
+		FROM t_book_metadata
+		<where>
+			<if test="uniqueId != null and uniqueId != ''">
+				AND unique_id like CONCAT(#{uniqueId},'%')
+			</if>
+			<if test="startTime !=null and startTime != '' ">
+				<![CDATA[ AND publish_date BETWEEN #{startTime} AND #{endTime}]]>
+			</if>
+			<if test="bookName != null and bookName != '' ">
+				AND book_name like CONCAT('%',#{bookName},'%')
+			</if>
+			<if test="bookIsbn != null and bookIsbn != '' ">
+				AND book_isbn like CONCAT(#{bookIsbn}, '%')
+			</if>
+			<if test="BookStatus == '4'.toString()">
+				AND book_pdf = '0' AND book_epub = '0' AND book_xml = '0'
+			</if>
+			<if test="BookStatus == '1'.toString()">
+				AND book_pdf = '1'
+			</if>
+			<if test="BookStatus == '2'.toString()">
+				AND book_epub = '3'
+			</if>
+			<if test="BookStatus == '3'.toString()">
+				AND book_xml = '1'
+			</if>
+			<if test="bookPdf != null and bookPdf != '' ">
+				AND book_pdf = #{bookPdf}
+			</if>
+		</where>
+		ORDER BY  ${sortField} ${sortType}
+		limit #{pageSize}
+	</select>
+	
+	<!-- 删除 -->
+	<delete id="deleteMetadataById" parameterType="string">
+		DELETE FROM t_book_metadata WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteColumnRelationByMetaId" parameterType="string">
+		DELETE FROM t_column_book WHERE metadata_id = #{value}
+	</delete>
+	
+	<delete id="deleteDataPackageRelationByMetaId" parameterType="string">
+		DELETE FROM t_data_package_book WHERE metadata_id = #{value}
+	</delete>
+	
+	<delete id="deletePrivateColumnRelationByMetaId" parameterType="string">
+		DELETE FROM t_private_column_book WHERE metadata_id = #{value}
+	</delete>
+	
+	<delete id="deletePrivateDataPackageRelationByMetaId" parameterType="string">
+		DELETE FROM t_private_data_package_book WHERE metadata_id = #{value}
+	</delete>
+	
+	<!-- 根据元数据id查询之前关联的所有栏目id -->
+	<select id="getColumnIdListByMetadataId" parameterType="long" resultType="long">
+		SELECT column_id FROM t_column_book WHERE metadata_id = #{value}
+	</select>
+	
+	<!-- 根据元数据id和栏目id删除两者关系 -->
+	<delete id="deleteColumnMetaRelation" parameterType="map">
+		DELETE FROM t_column_book WHERE metadata_id = #{metadataId} AND column_id = #{columnId}
+	</delete>
+	
+	<!-- 更新栏目id下元数据的排序 -->
+	<update id="updateColumnRelationByColumnId" parameterType="long">
+		UPDATE t_column_book
+		   SET sort = sort + 1
+		 WHERE column_id = #{columnId}
+	</update>
+	
+	<!-- 添加元数据与栏目关系 -->
+	<insert id="addColumnRelation" parameterType="map">
+		INSERT INTO t_column_book (
+			metadata_id,
+			column_id,
+			sort,
+			create_time
+		)
+		VALUES(
+			#{metadataId},
+			#{columnId},
+			#{sort},
+			NOW()
+		)
+	</insert>
+	
+	<!-- 根据元数据id查询之前关联的所有数据包id -->
+	<select id="getPackageIdListByMetadataId" parameterType="long" resultType="long">
+		SELECT data_package_id FROM t_data_package_book WHERE metadata_id = #{value}
+	</select>
+	
+	<!-- 根据元数据id和数据包id删除两者关系 -->
+	<delete id="deletePackageMetaRelation" parameterType="com.bfd.bean.DataPackgeBookBean">
+		DELETE FROM t_data_package_book WHERE metadata_id = #{metadataId} AND data_package_id = #{dataPackageId}
+	</delete>
+	
+	<delete id="deletePackageRelationByMetadataId" parameterType="long">
+		DELETE FROM t_data_package_book WHERE metadata_id = #{metadataId}
+	</delete>
+	
+	<delete id="deleteColumnRelationByMetadataId" parameterType="long">
+		DELETE FROM t_column_book WHERE metadata_id = #{metadataId}
+	</delete>
+	
+	
+	<!-- 添加元数据与数据包关系 -->
+	<insert id="addDataPakcageRelation" parameterType="map">
+		INSERT INTO t_data_package_book(
+			metadata_id,
+			data_package_id,
+			create_time
+		)
+		VALUES
+		<foreach collection="packageIdList" item="packageId" separator=",">
+		(
+		  #{metadataId},
+		  #{packageId},
+		  NOW()
+		)
+       </foreach>
+	</insert>
+
+	<select id="getPackageList" resultType="com.bfd.param.vo.DataPackageVO">
+		SELECT
+		id AS id,
+		name AS name,
+		alias_name AS aliasName,
+		parent_id AS parentId,
+		type AS type,
+		sort AS sort
+		FROM t_data_package
+	</select>
+
+	<select id="getColumnList" resultType="com.bfd.param.vo.ColumnVO">
+		SELECT
+		id AS id,
+		name AS name,
+		alias_name AS aliasName,
+		parent_id AS parentId,
+		type AS type,
+		sort AS sort
+		FROM t_column
+	</select>
+
+	<select id="getPackageListByMetadataId" parameterType="long" resultType="com.bfd.param.vo.DataPackageVO">
+		SELECT
+		id AS id,
+		name AS name,
+		alias_name AS aliasName,
+		parent_id AS parentId,
+		type AS type,
+		sort AS sort
+		FROM t_data_package
+		WHERE id
+		in (
+			select data_package_id
+			from t_data_package_book
+			where metadata_id = #{metadataId}
+		)
+	</select>
+
+	<select id="getColumnListByMetadataId" parameterType="long" resultType="com.bfd.param.vo.ColumnVO">
+		SELECT
+		id AS id,
+		name AS name,
+		alias_name AS aliasName,
+		parent_id AS parentId,
+		type AS type,
+		sort AS sort
+		FROM t_column
+		WHERE id
+		in (
+			select column_id
+			from t_column_book
+			where metadata_id = #{metadataId}
+		)
+	</select>
+	
+	<select id="getMetaDataList" parameterType="list" resultType="com.bfd.bean.MetadataBean">
+	 	select unique_id AS uniqueId,
+		       book_name AS bookName,
+		       author AS author,
+		       responsible AS responsible,
+		       press AS press,
+		       publish_place AS publishPlace,
+		       publish_date AS publishDate,
+		       language AS language,
+		       book_isbn AS bookIsbn,
+			   keywords AS keywords,
+			   content_summary AS contentSummary,
+			   book_maker AS bookMaker,
+			   make_time AS makeTime,
+			   edit_order AS editOrder,
+			   edit_order_year AS editOrderYear,
+			   edit_order_month AS editOrderMonth,
+			   print_order AS printOrder,
+			   print_order_year AS printOrderYear,
+			   print_order_month AS printOrderMonth,
+			   book_size AS bookSize,
+			   book_size_one AS bookSizeOne,
+			   book_size_two AS bookSizeTwo,
+			   word_count AS wordCount,
+			   print_sheet AS printSheet,
+			   binding_type AS bindingType,
+			   pages_number AS pagesNumber,
+			   editor AS editor,
+			   price AS price,
+			   book_category AS bookCategory,
+			   author_brief AS authorBrief,
+			   citation AS citation,
+			   import_version AS importVersion,
+			   origin_language AS originLanguage,
+			   origin_book_name AS originBbookName,
+			   translator AS translator
+		  FROM t_book_metadata
+	 	<where>
+		  	id in
+			<foreach collection="list" item="bookId" separator="," open="(" close=")">
+				#{bookId} 
+      	 	</foreach>
+	  	</where>
+	</select>
+	
+	 <sql id="Metadata_Column_alias">
+		unique_id AS uniqueId,
+		book_name AS bookName,
+		author AS author,
+		responsible AS responsible,
+		press AS press,
+		publish_place AS publishPlace,
+		publish_date AS publishDate,
+		language AS language,
+		book_isbn AS bookIsbn,
+		keywords AS keywords,
+		content_summary AS contentSummary,
+		book_maker AS bookMaker,
+		make_time AS makeTime,
+		edit_order AS editOrder,
+		edit_order_year AS editOrderYear,
+		edit_order_month AS editOrderMonth,
+		print_order AS printOrder,
+		print_order_year AS printOrderYear,
+		print_order_month AS printOrderMonth,
+		book_size AS bookSize,
+		book_size_one AS bookSizeOne,
+		book_size_two AS bookSizeTwo,
+		word_count AS wordCount,
+		print_sheet AS printSheet,
+		binding_type AS bindingType,
+		pages_number AS pagesNumber,
+		editor AS editor,
+		price AS price,
+		book_category AS bookCategory,
+		author_brief AS authorBrief,
+		citation AS citation,
+		import_version AS importVersion,
+		origin_language AS originLanguage,
+		origin_book_name AS originBbookName,
+		translator AS translator,
+		book_epub AS bookEpub,
+		book_xml AS bookXml,
+		book_xml_chapter AS bookXmlChapter,
+		book_pdf AS bookPdf
+    </sql>
+	
+	<!-- 根据唯一标识列表查询元数据列表 -->
+	<select id="getMetadataListByUniqueIdList" parameterType="list" resultType="com.bfd.bean.MetadataBean">
+	 	SELECT <include refid="Metadata_Column_alias"/>
+		  FROM t_book_metadata
+	 	<where>
+		  	unique_id IN
+			<foreach collection="list" item="uniqueId" separator="," open="(" close=")">
+			#{uniqueId} 
+      	 	</foreach>
+	  	</where>
+	</select>
+	
+</mapper>

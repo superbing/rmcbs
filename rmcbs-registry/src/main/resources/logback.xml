@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="true" scanPeriod="120 seconds" debug="false">
+
+	<property name="SystemName" value="RMCBS" />
+
+	<property name="ServiceName" value="EUREKA-SERVER" />
+	
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder charset="UTF-8">
+			<pattern>[%d{"yyyyMMdd'T'HHmmss+08"}][%-5p]{${ServiceName}}\(%t|%C.%M:%L\)–%m [1200]%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="Run_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Run_Logs/${SystemName}_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>1GB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>[%d{"yyyyMMdd'T'HHmmss+08"}][%-5p]{${ServiceName}}\(%t|%C.%M:%L\)–%m [1200]%n
+			</pattern>
+		</encoder>
+	</appender>
+
+
+	<!--操作日志 -->
+	<appender name="Ope_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Ope_Logs/${SystemName}_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>1GB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+
+
+	<!--行为日志 -->
+	<appender name="Beh_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Beh_Logs/${SystemName}_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>1GB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--服务接口日志 -->
+	<appender name="Ser_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Ser_Logs/${SystemName}_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>1GB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+
+
+	<logger name="Ope" level="INFO" additivity="false">
+		<appender-ref ref="Ope_Logs" />
+	</logger>
+
+	<logger name="Beh" level="INFO" additivity="false">
+		<appender-ref ref="Beh_Logs" />
+	</logger>
+
+	<logger name="Ser" level="INFO" additivity="false">
+		<appender-ref ref="Ser_Logs" />
+	</logger>
+
+	<root level="INFO">
+		<appender-ref ref="Run_Logs" />
+		<appender-ref ref="STDOUT" />
+	</root>
+
+</configuration>

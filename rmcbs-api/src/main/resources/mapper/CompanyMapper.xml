@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.CompanyMapper" >
+    
+    <!-- 根据id查询 -->
+    <select id="getById" parameterType="long" resultType="com.bfd.bean.CompanyBean">
+		SELECT t.id AS id,
+			   t.company_code AS companyCode,
+			   t.company_name AS companyName,
+			   t.company_type AS companyType,
+			   t.parent_company_id AS parentCompanyId,
+			   t.registration_place AS registrationPlace,
+			   t.company_description AS companyDescription,
+			   t.business_model AS businessModel,
+			   t.status AS status,
+			   t.access_key AS accessKey,
+			   t.update_time AS updateTime,
+			   t.create_time AS createTime
+		  FROM t_company t
+		 WHERE t.id = #{value}
+    </select>
+    
+     <select id="getBusinessInfo" parameterType="long" resultType="map">
+		SELECT start_time AS startTime,
+			   end_time AS endTime
+		  FROM t_business_units t
+		 WHERE t.business_id = #{value}
+    </select>
+    
+</mapper>

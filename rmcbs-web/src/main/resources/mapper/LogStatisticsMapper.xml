@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bfd.dao.mapper.LogStatisticsMapper">
+
+
+  <select id="getTheOtherDayTotal" resultType="com.bfd.param.vo.edgesighvo.home.InvokeTotalDTO">
+    SELECT
+      SUM(access_count) AS invokeTotal,
+      SUM(access_success_count) AS invokeSuccessTotal
+    FROM
+        t_log_statistics
+    WHERE
+	access_day BETWEEN #{startTime} AND #{endTime}
+  </select>
+
+  <select id="getTheseDaysCompanyTotal" resultType="com.bfd.param.vo.edgesighvo.home.InvokeTotalDTO">
+    SELECT
+      SUM(access_count) AS invokeTotal,
+      SUM(access_success_count) AS invokeSuccessTotal
+    FROM
+        t_log_statistics
+    WHERE
+    company_id = #{companyId} AND
+	access_day BETWEEN #{startTime} AND #{endTime}
+  </select>
+    <select id="getTimeRangeBusinessTotal" resultType="com.bfd.param.vo.edgesighvo.home.InvokeTotalDTO">
+    SELECT
+      SUM(access_count) AS invokeTotal,
+      SUM(access_success_count) AS invokeSuccessTotal
+    FROM
+        t_log_statistics
+    WHERE
+    business_id = #{companyId} AND
+	access_day BETWEEN #{startTime} AND #{endTime}
+   </select>
+
+  <select id="getApiSight" resultType="com.bfd.param.vo.edgesighvo.ApiSightVO">
+    SELECT
+        tai.id AS id,
+        tai.`name` AS `name`,
+        tai.url AS url,
+        tat.type_name AS typeName,
+        IFNULL(count1.timeTotal DIV count1.totalCount,0) AS avgTime,
+        IFNULL(count1.totalCount,0) AS totalCount,
+        IFNULL(tls1.accessCount,0) AS accessCount
+    FROM
+        t_api_info tai
+    LEFT JOIN t_api_type tat ON tai.api_type = tat.id
+    LEFT JOIN t_log_statistics tls ON tai.id = tls.api_id
+    LEFT JOIN (
+      SELECT
+          SUM(access_count) totalCount,
+          SUM(use_time) timeTotal,
+          access_day,
+          api_id
+      FROM
+          t_log_statistics
+      GROUP BY
+          api_id
+    ) count1 ON tai.id = count1.api_id
+    LEFT JOIN (
+      SELECT
+        api_id,
+        SUM(access_count) AS accessCount
+      FROM
+        t_log_statistics
+      WHERE
+        access_day = #{today}
+      GROUP BY
+        api_id
+    ) tls1 ON tai.id = tls1.api_id
+    WHERE
+      1 = 1
+      <if test="apiTypeId != null and apiTypeId != ''">
+        AND tat.id = #{apiTypeId}
+      </if>
+      <if test="apiName != null and apiName != ''">
+        AND tai.name like CONCAT(#{apiName},'%')
+      </if>
+    GROUP BY
+      tai.id
+  </select>
+
+  <select id="getCompanySight" resultType="com.bfd.param.vo.edgesighvo.CompanySightVO">
+    SELECT
+      tc.id AS id,
+      tc.company_name AS companyName,
+      tlc.access_count AS accessCount,
+      tlc.access_day AS accessDay
+    FROM
+        t_log_statistics tlc
+    LEFT JOIN t_company tc ON tlc.company_id = tc.id
+    WHERE
+	  tlc.api_id = #{apiId}
+    <if test="startTime!=null and startTime != '' and endTime!=null and endTime != ''">
+      <![CDATA[ AND tlc.access_day >= #{startTime} AND tlc.access_day <= #{endTime}]]>
+    </if>
+    <if test="companyId !=  null and companyId != '' ">
+      AND tlc.company_id = #{companyId}
+    </if>
+    order by tlc.access_day desc
+  </select>
+
+  <select id="getBusinessSight" resultType="com.bfd.param.vo.edgesighvo.BusinessSightVO">
+    SELECT
+      tc.id AS id,
+      replace(tc.access_key,SUBSTR(tc.access_key,10,12),'*********') AS accessKey,
+      tc.company_name AS companyName,
+      tlc.access_count AS accessCount,
+      tlc.access_day AS accessDay
+    FROM
+        t_log_statistics tlc
+    LEFT JOIN t_company tc ON tlc.business_id = tc.id
+    WHERE
+	  tlc.api_id = #{apiId} AND tlc.company_id = #{companyId} AND tlc.access_day = #{accessDay}
+    order by tlc.access_day desc
+</select>
+
+</mapper>

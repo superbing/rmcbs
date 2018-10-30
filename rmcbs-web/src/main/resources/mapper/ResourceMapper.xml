@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.ResourceMapper" >
+
+	<resultMap id="BaseResultMap" type="com.bfd.bean.ResourceBean">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+        <result column="flag" jdbcType="TINYINT" property="flag" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+    	id, name, parent_id
+  	</sql>
+
+	<select id="findAll" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from t_resource
+	</select>
+
+	<select id="findByRoleId" resultMap="BaseResultMap">
+		select
+			t_resource.id, t_resource.name, t_resource.parent_id,IF(ISNULL(t_role_resource.resource_id) = 0,1,0) flag
+		from t_resource
+		left join t_role_resource on t_resource.id = t_role_resource.resource_id
+		and t_role_resource.role_id = #{roleId}
+	</select>
+
+	<select id="getCustomerRecord" resultType="com.bfd.param.vo.ResourceRecordVO">
+		SELECT
+			IFNULL(COUNT(tbc.id),0) AS columnNum,
+			IFNULL(COUNT(tbd.id),0) AS packageNum
+		FROM
+			t_company t
+		LEFT JOIN t_business_column tbc ON t.id = tbc.business_id
+		LEFT JOIN t_business_data_package tbd ON t.id = tbd.business_id
+		WHERE t.id = #{id}
+	</select>
+	
+</mapper>

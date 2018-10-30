@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.DataPackageMapper">
+    <resultMap id="BaseResultMap" type="com.bfd.bean.DataPackageBean">
+        <result column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="alias_name" property="aliasName"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="type" property="type"/>
+        <result column="sort" property="sort"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="getPackageList" resultMap="BaseResultMap">
+        SELECT * FROM t_data_package ORDER BY create_time desc
+    </select>
+
+    <select id="getPackageOneLevel" resultType="Long">
+        SELECT
+	        t2.id
+        FROM
+            `t_data_package` t1
+        LEFT JOIN t_data_package t2 ON t1.parent_id = t2.id
+        WHERE
+            t1.parent_id != 0
+        GROUP BY
+	t2.id
+    </select>
+
+    <select id="getPackageTotal" resultType="Long">
+        SELECT count(0) FROM t_data_package where parent_id = 0
+    </select>
+
+    <select id="getPackageListByParentId" resultMap="BaseResultMap">
+        SELECT * FROM t_data_package where parent_id = #{id}
+    </select>
+
+    <select id="getPackageInfoById" resultMap="BaseResultMap">
+        SELECT * FROM t_data_package where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_data_package(
+          name,
+          alias_name,
+          parent_id,
+          type,
+          sort,
+          create_time,
+          create_user,
+          update_time,
+          update_user
+        )VALUES(
+          #{name},
+          #{aliasName},
+          #{parentId},
+          #{type},
+          #{sort},
+          now(),
+          #{createUser},
+          now(),
+          #{updateUser}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE
+          t_data_packageaddBookMetadata
+        SET
+          name = #{name},
+          update_time = now(),
+          update_user = #{updateUser}
+        <if test="aliasName != null and aliasName != '' ">
+            , alias_name = #{aliasName}
+        </if>
+        <if test="sort != null and sort != '' ">
+            , sort = #{sort}
+        </if>
+        WHERE
+          id = #{id}
+    </update>
+
+    <delete id="delete">
+        delete from t_data_package where id = #{id}
+    </delete>
+
+    <insert id="addBookMetadata" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO
+        t_data_package_book(
+          data_package_id,
+          metadata_id,
+          create_time
+        )VALUES
+        <foreach collection="metadataIds" item="metadataId" separator=",">
+            (
+            #{dataPackageId},
+            #{metadataId},
+            NOW()
+            )
+        </foreach>
+    </insert>
+
+    <delete id="batchDeleteDataPackage">
+        delete from
+        t_data_package
+        where id
+        in
+        <foreach collection="list" item="x" separator="," open="(" close=")">
+          #{x.id}
+        </foreach>
+
+    </delete>
+
+    <delete id="deleteDataPackageBookByDataPackageId">
+        delete from
+        t_data_package_book
+        where
+        data_package_id = #{id}
+    </delete>
+
+    <delete id="batchDeleteDataPackageBookByDataPackageId">
+        delete from
+        t_data_package_book
+        where data_package_id
+        in
+        <foreach collection="list" item="DataPackageBean" separator="," open="(" close=")">
+          #{DataPackageBean.id}
+        </foreach>
+
+    </delete>
+
+    <delete id="batchDeleteFromDataPackage">
+        delete from
+        t_data_package_book
+        where
+        data_package_id = #{dataPackageId}
+        and
+        metadata_id
+        in
+        <foreach collection="metadataIds" item="metadataId" separator="," open="(" close=")">
+            #{metadataId}
+        </foreach>
+    </delete>
+
+    <select id="getMetadataListByPackageId" parameterType="long" resultType="com.bfd.param.vo.BookVO">
+        SELECT id AS id,
+        unique_id AS uniqueId,
+        book_name AS bookName,
+        author AS author,
+        responsible AS responsible,
+        press AS press,
+        publish_place AS publishPlace,
+        publish_date AS publishDate,
+        language AS language,
+        book_isbn AS bookIsbn,
+        book_pdf AS bookPdf,
+        book_epub AS bookEpub,
+        book_xml AS bookXml
+        FROM t_book_metadata
+        WHERE id
+        in (
+        select metadata_id
+        from t_data_package_book
+        where data_package_id = #{dataPackageId}
+        );
+    </select>
+
+    <select id="queryMetadataList" resultType="com.bfd.param.vo.BookVO">
+        SELECT id AS id,
+        unique_id AS uniqueId,
+        book_name AS bookName,
+        author AS author,
+        responsible AS responsible,
+        press AS press,
+        publish_place AS publishPlace,
+        publish_date AS publishDate,
+        language AS language,
+        book_isbn AS bookIsbn,
+        book_pdf AS bookPdf,
+        book_epub AS bookEpub,
+        book_xml AS bookXml
+        FROM t_book_metadata
+        WHERE 1 = 1
+        <if test="startTime!=null and startTime != '' ">
+            <![CDATA[ AND publish_date >= #{startTime} AND publish_date <= #{endTime}]]>
+        </if>
+        <if test="bookPdf!=null and bookPdf != '' ">
+            <![CDATA[ AND book_pdf = #{bookPdf}]]>
+        </if>
+        <if test="bookEpub!=null and bookEpub != '' ">
+            <![CDATA[ AND book_epub = #{bookEpub}]]>
+        </if>
+        <if test="bookXml!=null and bookXml != '' ">
+            <![CDATA[ AND book_xml = #{bookXml}]]>
+        </if>
+        <if test="bookStatus!=null and bookStatus != '' ">
+            AND book_xml = 0 AND book_pdf = 0 AND book_epub = 0
+        </if>
+        <if test="uniqueId!=null and uniqueId != '' ">
+            <![CDATA[ AND unique_id LIKE '%${uniqueId}%']]>
+        </if>
+        <if test="bookIsbn!=null and bookIsbn != '' ">
+            <![CDATA[ AND book_isbn LIKE '%${bookIsbn}%']]>
+        </if>
+        <if test="bookName!=null and bookName != '' ">
+            <![CDATA[ AND book_name LIKE '%${bookName}%']]>
+        </if>
+        ORDER BY  ${sortField} ${sortType}
+    </select>
+
+    <select id="getMetadataListForPackage" resultType="com.bfd.param.vo.BookVO">
+        SELECT id AS id,
+        unique_id AS uniqueId,
+        book_name AS bookName,
+        author AS author,
+        responsible AS responsible,
+        press AS press,
+        publish_place AS publishPlace,
+        publish_date AS publishDate,
+        language AS language,
+        book_isbn AS bookIsbn,
+        book_pdf AS bookPdf,
+        book_epub AS bookEpub,
+        book_xml AS bookXml
+        FROM t_book_metadata
+        WHERE id
+        in (
+        select metadata_id
+        from t_data_package_book
+        where data_package_id
+        in
+        <foreach collection="dataPackageId" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        <if test="startTime!=null and startTime != '' ">
+            <![CDATA[ AND publish_date >= #{startTime} AND publish_date <= #{endTime}]]>
+        </if>
+        <if test="author!=null and author != '' ">
+            <![CDATA[ AND author LIKE '%${author}%']]>
+        </if>
+        <if test="bookName!=null and bookName != '' ">
+            <![CDATA[ AND book_name LIKE '%${bookName}%']]>
+        </if>
+        <if test="bookIsbn!=null and bookIsbn != '' ">
+            <![CDATA[ AND book_isbn LIKE '%${bookIsbn}%']]>
+        </if>
+        <if test="uniqueId!=null and uniqueId != '' ">
+            <![CDATA[ AND unique_id LIKE '%${uniqueId}%']]>
+        </if>
+        ORDER BY  ${sortField} ${sortType}
+    </select>
+
+    <select id="getBookNumber" resultType="int">
+        select count(*) from t_data_package_book where data_package_id = #{id}
+    </select>
+
+    <select id="getPackageBusinessRelation" parameterType="list" resultType="com.bfd.bean.BusinessPackageBean">
+        SELECT id,
+        data_package_id AS dataPackageId,
+        business_id 	AS businessId,
+        create_time AS createTime
+        FROM t_business_data_package
+        <where>
+            data_package_id IN
+            <foreach collection="list" item="dataPackage" separator="," open="(" close=")">
+                #{dataPackage.id}
+            </foreach>
+        </where>
+    </select>
+
+    <select id="getBookNumberByA" resultType="int">
+        select count(0)
+        from (
+          select *
+          from t_data_package_book
+          where data_package_id
+          in (
+            select id
+            from t_data_package
+            where parent_id = #{id}
+          )
+          GROUP BY metadata_id
+        ) t;
+    </select>
+
+    <select id="getBookNumberByFirst" resultType="int">
+        select count(0)
+        from t_data_package_book
+        where data_package_id = #{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.PrivateColumnMapper">
+    <resultMap id="BaseResultMap" type="com.bfd.bean.PrivateColumnBean">
+        <result column="id" property="id"/>
+        <result column="business_id" property="businessId"/>
+        <result column="name" property="name"/>
+        <result column="alias_name" property="aliasName"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="type" property="type"/>
+        <result column="sort" property="sort"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="getPrivateColumnList" resultMap="BaseResultMap">
+        SELECT * FROM t_private_column where business_id = #{businessId}
+    </select>
+
+    <select id="getPrivateColumnListByParentId" resultMap="BaseResultMap">
+        SELECT * FROM t_private_column where parent_id = #{id}
+    </select>
+
+    <select id="getPrivateColumnInfoById" resultMap="BaseResultMap">
+        SELECT * FROM t_private_column where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_private_column(
+            business_id,
+            name,
+            alias_name,
+            parent_id,
+            type,
+            sort,
+            create_time,
+            create_user,
+            update_time,
+            update_user
+        )VALUES(
+            #{businessId},
+            #{name},
+            #{aliasName},
+            #{parentId},
+            #{type},
+            #{sort},
+            now(),
+            #{createUser},
+            now(),
+            #{updateUser}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE t_private_column
+        SET name = #{name},
+        update_time = now(),
+        update_user = #{updateUser}
+        <if test="aliasName != null and aliasName != '' ">
+            , alias_name = #{aliasName}
+        </if>
+        , sort = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        delete from t_private_column where id = #{id}
+    </delete>
+
+    <insert id="addBookMetadata" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_private_column_book(
+          column_id,
+          metadata_id,
+          sort,
+          create_time
+        )VALUES(
+          #{privatecolumnId},
+          #{metadataId},
+          #{sort},
+          NOW()
+        )
+    </insert>
+
+    <delete id="batchDeletePrivateColumn">
+        delete from t_private_column where id in
+        <foreach collection="list" item="PrivateColumnBean" separator="," open="(" close=")">
+            #{PrivateColumnBean.id}
+        </foreach>
+    </delete>
+
+    <delete id="deletePrivateColumnBookByColumnId">
+        delete from t_private_column_book where column_id = #{id}
+    </delete>
+
+    <delete id="batchDeletePrivateColumnBookByColumnId">
+        delete from t_private_column_book where column_id in
+        <foreach collection="list" item="PrivateColumnBean" separator="," open="(" close=")">
+            #{PrivateColumnBean.id}
+        </foreach>
+    </delete>
+
+    <update id="updateSortAddByParentId">
+        UPDATE t_private_column
+        SET sort = sort + 1
+        WHERE parent_id = #{parentId}
+    </update>
+
+    <update id="updateRelationSortAddByColumnId">
+        UPDATE t_private_column_book
+        SET sort = sort + #{n}
+        WHERE column_id = #{privatecolumnId}
+    </update>
+
+    <delete id="batchDeleteFromPrivateColumn">
+        delete
+        from t_private_column_book
+        where column_id = #{privateColumnId}
+        and metadata_id
+        in
+        <foreach collection="metadataIds" item="metadataId" separator="," open="(" close=")">
+            #{metadataId}
+        </foreach>
+    </delete>
+
+    <select id="getMetadataListByPrivateColumnId" parameterType="long" resultType="com.bfd.param.vo.BookVO">
+        SELECT id AS id,
+            unique_id AS uniqueId,
+            book_name AS bookName,
+            author AS author,
+            responsible AS responsible,
+            press AS press,
+            publish_place AS publishPlace,
+            publish_date AS publishDate,
+            language AS language,
+            book_isbn AS bookIsbn,
+            book_pdf AS bookPdf,
+            book_epub AS bookEpub,
+            book_xml AS bookXml
+            FROM t_book_metadata
+        WHERE id
+        in (
+            select metadata_id
+            from t_private_column_book
+            where column_id = #{privateColumnId}
+        );
+    </select>
+
+    <update id="updatePrivateColumnBookRelationSort">
+        UPDATE t_private_column_book
+        SET sort = #{sort}
+        WHERE column_id = #{privateColumnId}
+        and metadata_id  =#{metadataId}
+    </update>
+
+    <select id="getPrivateColumnBookRelationBean" resultType="java.util.Map">
+        SELECT id,
+            metadata_id,
+            column_id,
+            sort
+        FROM t_private_column_book
+        WHERE column_id = #{privateColumnId}
+        and metadata_id  = #{metadataId}
+    </select>
+
+    <select id="getPrivateColumnBookRelationList" resultType="java.util.Map">
+        SELECT id,
+        metadata_id,
+        column_id,
+        sort
+        FROM t_private_column_book
+        WHERE column_id
+        IN
+        <foreach collection="privateColumnId" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="getBeforeRelationIdsByPrivateColumnIdAndMetadataId" resultType="long">
+        select id
+        from t_private_column_book
+        where column_id = #{privateColumnId}
+        and sort &lt; (
+            select sort
+            from t_private_column_book
+            where column_id = #{privateColumnId}
+            and metadata_id = #{metadataId}
+        )
+    </select>
+
+    <select id="getAfterRelationIdsByPrivateColumnIdAndMetadataId" resultType="long">
+        select id
+        from t_private_column_book
+        where column_id = #{privateColumnId}
+        and sort &gt; (
+            select sort
+            from t_private_column_book
+            where column_id = #{privateColumnId}
+            and metadata_id = #{metadataId}
+        )
+    </select>
+
+
+    <update id="updateRelationSortAddByIds">
+        UPDATE t_private_column_book
+        SET sort = sort + 1
+        WHERE id
+        IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateRelationSortReduceByIds">
+        UPDATE t_private_column_book
+        SET sort = sort - 1
+        WHERE id
+        IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="getMaxSortByPrivateColumnId" resultType="int">
+        select max(sort)
+        from t_private_column_book
+        where column_id = #{privatecolumnId}
+    </select>
+
+    <select id="getMetadataListForPrivateColumn" resultType="com.bfd.param.vo.BookVO">
+        SELECT id AS id,
+        unique_id AS uniqueId,
+        book_name AS bookName,
+        author AS author,
+        responsible AS responsible,
+        press AS press,
+        publish_place AS publishPlace,
+        publish_date AS publishDate,
+        language AS language,
+        book_isbn AS bookIsbn,
+        book_pdf AS bookPdf,
+        book_epub AS bookEpub,
+        book_xml AS bookXml
+        FROM t_book_metadata
+        WHERE id
+        in (
+        select metadata_id
+        from t_private_column_book
+        where column_id
+        IN
+        <foreach collection="privateColumnId" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        <if test="startTime!=null and startTime != '' ">
+            <![CDATA[ AND publish_date >= #{startTime} AND publish_date <= #{endTime}]]>
+        </if>
+        <if test="author!=null and author != '' ">
+            <![CDATA[ AND author LIKE '%${author}%']]>
+        </if>
+        <if test="bookName!=null and bookName != '' ">
+            <![CDATA[ AND book_name LIKE '%${bookName}%']]>
+        </if>
+        <if test="bookIsbn!=null and bookIsbn != '' ">
+            <![CDATA[ AND book_isbn LIKE '%${bookIsbn}%']]>
+        </if>
+        <if test="uniqueId!=null and uniqueId != '' ">
+            <![CDATA[ AND unique_id LIKE '%${uniqueId}%']]>
+        </if>
+        ORDER BY  ${sortField} ${sortType}
+    </select>
+
+    <select id="getSkinColorInfo" resultType="com.bfd.bean.PrivateTemplateBean">
+        SELECT id AS id,
+        skin AS skin,
+        company_id AS companyId
+        FROM t_private_template
+        WHERE company_id = #{companyId}
+    </select>
+
+    <update id="updateSkinColor">
+        UPDATE t_private_template
+        SET skin = #{skin}
+        WHERE company_id = #{companyId}
+    </update>
+
+    <insert id="addSkinColor" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_private_template(
+          skin,
+          company_id
+        )VALUES(
+          #{skin},
+          #{companyId}
+        )
+    </insert>
+
+    <select id="getBookNumber" resultType="int">
+        select count(*) from t_private_column_book where column_id = #{id}
+    </select>
+
+    <select id="getBookNumberByA" resultType="int">
+        select count(0)
+        from (
+          select *
+          from t_private_column_book
+          where column_id
+          in (
+            select id
+            from t_private_column
+            where parent_id = #{id}
+          )
+          GROUP BY metadata_id
+        ) t;
+    </select>
+
+    <select id="getBookNumberByFirst" resultType="int">
+        select count(0)
+        from t_private_column_book
+        where column_id = #{id}
+    </select>
+
+    <select id="getColumnListByRang" resultMap="BaseResultMap">
+        SELECT * FROM t_private_column where parent_id = #{id} and
+        sort &gt;= #{firstSort} and sort &lt;#{secondSort}
+    </select>
+
+    <select id="getColumnListByAfter" resultMap="BaseResultMap">
+        SELECT * FROM t_private_column where parent_id = #{id} and
+        sort &gt;= #{firstSort}
+    </select>
+
+</mapper>

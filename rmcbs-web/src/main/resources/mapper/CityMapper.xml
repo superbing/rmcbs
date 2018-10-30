@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bfd.dao.mapper.CityMapper">
+
+  <resultMap id="ResultTreeMap" type="com.bfd.param.vo.CityVO">
+    <id column="id" property="id" />
+    <result column="name" property="name" />
+    <collection property="children" ofType="com.bfd.bean.CityBean">
+      <id column="childrenId" property="id" />
+      <result column="childrenName" property="name" />
+      <result column="childrenParentId" property="parentId" />
+    </collection>
+  </resultMap>
+
+  <select id="getCityTree" resultMap="ResultTreeMap">
+    SELECT
+      tc1.id AS id,
+      tc1.`name` AS name,
+      tc2.id AS childrenId,
+      tc2.`name` AS childrenName,
+      tc2.parent_id AS childrenParentId
+    FROM
+        t_city tc1
+    LEFT JOIN t_city tc2
+    ON tc1.id = tc2.parent_id
+    WHERE tc1.parent_id IS NULL
+  </select>
+
+</mapper>

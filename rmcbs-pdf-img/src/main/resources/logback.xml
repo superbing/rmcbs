@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="true" scanPeriod="120 seconds" debug="false">
+
+	<conversionRule conversionWord="code"
+		converterClass="com.bfd.utils.CodeConvert" />
+
+	<!--系统名称 :数据服务平台 -->
+	<property name="SystemName" value="RMCBS" />
+
+	<!--应用名称 :基础中文语义服务 -->
+	<property name="ServiceName" value="PDF-IMG" />
+
+	<!--控制台输出 -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder charset="UTF-8">
+			<pattern>[%d{"yyyy-MM-dd HH:mm:ss +08"}][%-5p]{${ServiceName}}\(%t|%C.%M:%L\)–%m[%code]%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--运行日志 -->
+	<appender name="Run_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Run_Logs/${SystemName}_YY_YX_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>[%d{"yyyy-MM-dd HH:mm:ss +08"}][%-5p]{${ServiceName}}\(%t|%C.%M:%L\)–%m[%code]%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--操作日志 -->
+	<appender name="Ope_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Ope_Logs/${SystemName}_YY_CZ_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--行为日志 -->
+	<appender name="Beh_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Beh_Logs/${SystemName}_YY_XW_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--服务接口日志 -->
+	<appender name="Ser_Logs"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>log/${SystemName}_YY_LOGS/%d{yyyy-MM-dd}/Ser_Logs/${SystemName}_YY_FW_%d{yyyyMMdd}.log
+			</FileNamePattern>
+			<MaxHistory>30</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="Ope" level="INFO" additivity="false">
+		<appender-ref ref="Ope_Logs" />
+	</logger>
+
+	<logger name="Beh" level="INFO" additivity="false">
+		<appender-ref ref="Beh_Logs" />
+	</logger>
+
+	<logger name="Ser" level="INFO" additivity="false">
+		<appender-ref ref="Ser_Logs" />
+	</logger>
+
+	<root level="INFO">
+		<appender-ref ref="Run_Logs" />
+		<appender-ref ref="STDOUT" />
+	</root>
+
+</configuration>

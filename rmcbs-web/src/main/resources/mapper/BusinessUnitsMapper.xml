@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.BusinessUnitsMapper" >
+    <resultMap id="BaseResultMap" type="com.bfd.bean.BusinessUnitsBean">
+        <result column="business_id" property="businessId"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="terminal" property="terminal"/>
+        <result column="terminal_status" property="terminalStatus"/>
+        <result column="concurrence" property="concurrence"/>
+        <result column="concurrence_status" property="concurrenceStatus"/>
+        <result column="ip_status" property="ipStatus"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="IpResultMap" type="com.bfd.bean.IpRangeBean">
+        <result column="id" property="id"/>
+        <result column="business_id" property="businessId"/>
+        <result column="start_ip" property="startIp"/>
+        <result column="end_ip" property="endIp"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        business_id,
+        start_time,
+        end_time,
+        terminal,
+        terminal_status,
+        concurrence,
+        concurrence_status,
+        ip_status,
+        create_time
+    </sql>
+
+    <sql id="Base_Column_Ip">
+        id,
+        business_id,
+        start_ip,
+        end_ip,
+        create_time
+    </sql>
+
+    <insert id="insert" parameterType="com.bfd.bean.BusinessUnitsBean">
+        insert into t_business_units(
+        <include refid="Base_Column_List"/>
+        )values (
+         #{businessId},
+         #{startTime},
+         #{endTime},
+         #{terminal},
+         #{terminalStatus},
+         #{concurrence},
+         #{concurrenceStatus},
+         #{ipStatus},
+         now()
+        )
+    </insert>
+
+    <insert id="insertIp" useGeneratedKeys="true">
+        insert into t_ip_range(
+            business_id,
+            start_ip,
+            end_ip,
+            create_time
+        )values
+        <foreach collection="list" item="IpRange" index="index" separator=",">
+            (
+            #{IpRange.businessId},
+            #{IpRange.startIp},
+            #{IpRange.endIp},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.bfd.bean.BusinessUnitsBean">
+        update t_business_units
+        <trim prefix="set" suffixOverrides=",">
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="terminal != null">
+                terminal = #{terminal},
+            </if>
+            <if test="terminalStatus != null">
+                terminal_status = #{terminalStatus},
+            </if>
+            <if test="concurrence != null">
+                concurrence = #{concurrence},
+            </if>
+            <if test="concurrenceStatus != null">
+                concurrence_status = #{concurrenceStatus},
+            </if>
+            <if test="ipStatus != null">
+                ip_status = #{ipStatus},
+            </if>
+        </trim>
+        <where>
+            business_id = #{businessId}
+        </where>
+    </update>
+
+    <update id="updateIp" parameterType="com.bfd.bean.IpRangeBean">
+        update t_ip_range
+        <trim prefix="set" suffixOverrides=",">
+            <if test="startIp != null and startIp !=''">
+                start_ip = #{startIp}
+            </if>
+            <if test="endIp!= null and endIp !=''">
+                end_ip = #{endIp}
+            </if>
+        </trim>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <delete id="delete">
+        DELETE FROM t_business_units WHERE business_id IN
+        <foreach collection="ids" item="CompanyBean"  separator="," open="(" close=")">
+            #{CompanyBean.id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteIp">
+        DELETE FROM t_ip_range WHERE business_id in
+        <foreach collection="ids" item="BusinessUnitsBean"  separator="," open="(" close=")">
+            #{BusinessUnitsBean.businessId}
+        </foreach>
+    </delete>
+
+    <select id="getCustomersList" resultType="com.bfd.param.vo.BusinessUnitsVO" parameterType="com.bfd.param.vo.CompanyVO">
+        SELECT
+            tc1.id AS id,
+            tc1.company_name AS companyName,
+            tc1.company_code AS companyCode,
+            tc1.access_key AS accessKey,
+            tc1.status AS status,
+            tc2.id AS parentCompanyId,
+            tc2.company_name AS parentCompanyName,
+            tbu.start_time AS startTime,
+            tbu.end_time AS endTime,
+            tbu.terminal AS terminal,
+            tbu.terminal_status AS terminalStatus,
+            tbu.concurrence AS concurrence,
+            tbu.concurrence_status AS concurrenceStatus,
+            tbu.ip_status AS ipStatus,
+            tc1.create_time AS createTime
+        FROM
+            t_company tc1
+        LEFT JOIN t_business_units tbu ON tc1.id = tbu.business_id
+        LEFT JOIN t_company tc2 ON tc1.parent_company_id = tc2.id
+        WHERE
+            <![CDATA[tc1.parent_company_id <> 0]]>
+            <if test="companyId != null and companyId != ''">
+                AND tc2.id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != '' ">
+                AND tc1.company_name like CONCAT('%', #{companyName}, '%')
+            </if>
+            <if test="companyCode != null and companyCode != '' ">
+                AND tc1.company_code like CONCAT(#{companyCode}, '%')
+            </if>
+        order by ${sortField} ${sortType}
+    </select>
+
+    <select id="getBusiness" resultType="com.bfd.param.vo.BusinessUnitsVO">
+        SELECT
+            tc1.id AS id,
+            tc1.company_name AS companyName,
+            tc2.id AS parentCompanyId,
+            tc2.company_name AS parentCompanyName,
+            tbu.start_time AS startTime,
+            tbu.end_time AS endTime,
+            tbu.terminal AS terminal,
+            tbu.terminal_status AS terminalStatus,
+            tbu.concurrence AS concurrence,
+            tbu.concurrence_status AS concurrenceStatus,
+            tbu.ip_status AS ipStatus,
+            tbu.create_time AS createTime
+        FROM
+            t_company tc1
+            LEFT JOIN t_business_units tbu ON tc1.id = tbu.business_id
+            LEFT JOIN t_company tc2 ON tc1.parent_company_id = tc2.id
+        WHERE
+          tc1.id = #{id}
+    </select>
+
+    <select id="getBusinessById" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM
+            t_business_units
+        WHERE
+          business_id = #{id}
+    </select>
+    
+    <select id="getIpRangeList" resultMap="IpResultMap">
+        SELECT
+          <include refid="Base_Column_Ip"/>
+          FROM t_ip_range
+         WHERE business_id = #{id}
+    </select>
+</mapper>

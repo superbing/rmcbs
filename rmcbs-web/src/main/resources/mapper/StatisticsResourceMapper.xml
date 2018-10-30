@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.StatisticsResourceMapper">
+
+    <select id="getPackageList" resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT t.id,
+        t.name,
+        t.alias_name as aliasName,
+        t.parent_id as parentId,
+        t.type,
+        t.sort,
+        t.create_time as createDate,
+        d.name as typeName
+        FROM t_data_package t
+        LEFT JOIN t_dict d
+        on  t.type = d.code
+        where t.parent_id = 0
+        and d.type = 'type'
+        <if test="name!=null and name != '' ">
+            <![CDATA[ AND t.name LIKE '%${name}%']]>
+        </if>
+        ORDER BY  t.${sortField} ${sortType}
+    </select>
+
+    <select id="getPackageListByParentId" parameterType="long" resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT id,
+          name,
+          alias_name as aliasName,
+          parent_id as parentId,
+          type,
+          sort,
+          create_time as createDate
+        FROM t_data_package where parent_id = #{id}
+    </select>
+
+    <select id="queryCompanyNumberByPackage" resultType="int">
+        select count(0)
+        from (
+          SELECT *
+          FROM t_business_data_package
+          where data_package_id
+          in (
+            select id
+            from t_data_package
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          GROUP BY business_id
+        ) t
+    </select>
+
+    <select id="queryBookNumberByPackage" resultType="int">
+        select count(*) from (
+        select * from t_data_package_book where data_package_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        GROUP BY metadata_id) t
+    </select>
+
+    <select id="queryPdfNumberByPackage" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+            select DISTINCT metadata_id from t_data_package_book where
+              data_package_id
+            IN
+            <foreach collection="list" item="id" separator="," open="(" close=")">
+              #{id}
+            </foreach>
+        )
+        and book_pdf =1;
+    </select>
+
+    <select id="queryEpubNumberByPackage" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_data_package_book where
+        data_package_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_epub =3;
+    </select>
+<!--=================================================================================================================-->
+    <select id="getColumnList" resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT t.id,
+        t.name,
+        t.alias_name as aliasName,
+        t.parent_id as parentId,
+        t.type,
+        t.sort,
+        t.create_time as createDate,
+        d.name as typeName
+        FROM t_column t
+        LEFT JOIN t_dict d
+        on  t.type = d.code
+        where t.parent_id = 0
+        and d.type = 'type'
+        <if test="name!=null and name != '' ">
+            <![CDATA[ AND t.name LIKE '%${name}%']]>
+        </if>
+        ORDER BY  t.${sortField} ${sortType}
+    </select>
+
+    <select id="getColumnListByParentId" parameterType="long" resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT id,
+        name,
+        alias_name as aliasName,
+        parent_id as parentId,
+        type,
+        sort,
+        create_time as createDate
+        FROM t_column where parent_id = #{id}
+    </select>
+
+    <select id="queryCompanyNumberByColumn" resultType="int">
+        select count(0)
+        from (
+		  SELECT *
+		  FROM t_business_column
+		  where column_id
+		  in (
+		    select id
+            from t_column
+			where parent_id = #{id}
+			or id = #{id}
+		  )
+		  GROUP BY business_id
+	    ) t
+    </select>
+
+    <select id="queryBookNumberByColumn" resultType="int">
+        select count(*) from (
+        select * from t_column_book where column_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        GROUP BY metadata_id) t
+    </select>
+
+    <select id="queryPdfNumberByColumn" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_column_book where
+        column_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_pdf =1;
+    </select>
+
+    <select id="queryEpubNumberByColumn" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_column_book where
+        column_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_epub =3;
+    </select>
+<!--=================================================================================================================-->
+    <select id="getPrivatePackageList" resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT t.id,
+        t.name,
+        t.alias_name as aliasName,
+        t.parent_id as parentId,
+        t.type,
+        t.sort,
+        t.create_time as createDate,
+        d.name as typeName
+        FROM t_private_data_package t
+        LEFT JOIN t_dict d
+        on  t.type = d.code
+        where t.parent_id = 0
+        and d.type = 'type'
+        <if test="name!=null and name != '' ">
+            <![CDATA[ AND t.name LIKE '%${name}%']]>
+        </if>
+        ORDER BY  t.${sortField} ${sortType}
+    </select>
+
+    <select id="getPrivatePackageListByParentId" parameterType="long" resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT id,
+        name,
+        alias_name as aliasName,
+        parent_id as parentId,
+        type,
+        sort,
+        create_time as createDate
+        FROM t_private_data_package where parent_id = #{id}
+    </select>
+
+    <select id="queryBookNumberByPrivatePackage" resultType="int">
+        select count(*) from (
+        select * from t_private_data_package_book where data_package_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        GROUP BY metadata_id) t
+    </select>
+
+    <select id="queryPdfNumberByPrivatePackage" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_private_data_package_book where
+        data_package_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_pdf =1;
+    </select>
+
+    <select id="queryEpubNumberByPrivatePackage" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_private_data_package_book where
+        data_package_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_epub =3;
+    </select>
+<!--=================================================================================================================-->
+    <select id="getPrivateColumnList"  resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT t.id,
+        t.name,
+        t.alias_name as aliasName,
+        t.parent_id as parentId,
+        t.type,
+        t.sort,
+        t.create_time as createDate,
+        d.name as typeName
+        FROM t_private_column t
+        LEFT JOIN t_dict d
+        on  t.type = d.code
+        where t.parent_id = 0
+        and d.type = 'type'
+        <if test="name!=null and name != '' ">
+            <![CDATA[ AND t.name LIKE '%${name}%']]>
+        </if>
+        ORDER BY  t.${sortField} ${sortType}
+    </select>
+
+    <select id="getPrivateColumnListByParentId" parameterType="long"
+            resultType="com.bfd.param.vo.statisticsvo.ResourceCategoryVO">
+        SELECT id,
+        name,
+        alias_name as aliasName,
+        parent_id as parentId,
+        type,
+        sort,
+        create_time as createDate
+        FROM t_private_column where parent_id = #{id}
+    </select>
+
+    <select id="queryBookNumberByPrivateColumn" resultType="int">
+        select count(*) from (
+        select * from t_private_column_book where column_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        GROUP BY metadata_id) t
+    </select>
+
+    <select id="queryPdfNumberByPrivateColumn" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_private_column_book where
+        column_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_pdf =1;
+    </select>
+
+    <select id="queryEpubNumberByPrivateColumn" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in(
+        select DISTINCT metadata_id from t_private_column_book where
+        column_id
+        IN
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        and book_epub =3;
+    </select>
+<!--=================================================================================================================-->
+    <select id="getCompanyListByPackage" resultType="com.bfd.param.vo.statisticsvo.ResourceCompanyInfoVO">
+        SELECT id,
+        company_code as companyCode,
+        company_name as companyName,
+        access_key as accessKey,
+        parent_company_id as parentCompanyId,
+        status as status
+        FROM t_company
+        where id in (
+            select
+              business_id as id
+            from
+              t_business_data_package
+            where
+              data_package_id in
+              <foreach collection="list" item="id" separator="," open="(" close=")">
+                  #{id}
+              </foreach>
+        )
+        <if test="businessId!=null and businessId != '' ">
+            <![CDATA[ AND parent_company_id = #{businessId}]]>
+        </if>
+        <if test="companyName!=null and companyName != '' ">
+            <![CDATA[ AND company_name LIKE '%${companyName}%']]>
+        </if>
+        ORDER BY  ${sortField} ${sortType}
+    </select>
+
+    <select id="getCompanyPackageNumber" resultType="int">
+        select count(0)
+        from t_business_data_package
+        where business_id = #{companyId}
+        AND data_package_id IN
+          <foreach collection="cidList" item="id" separator="," open="(" close=")">
+              #{id}
+          </foreach>
+    </select>
+
+    <select id="queryCompanyBookNumberByPackage" resultType="int">
+        select count(0) from (
+          select *
+          from t_data_package_book
+          where data_package_id
+          in (
+            select data_package_id
+            from t_business_data_package
+            where business_id = #{companyId}
+            and data_package_id
+            in
+              <foreach collection="cidList" item="id" separator="," open="(" close=")">
+                #{id}
+              </foreach>
+          )
+          GROUP BY metadata_id
+        ) t
+    </select>
+
+    <select id="queryCompanyPdfNumberByPackage" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in (
+          select metadata_id
+          from t_data_package_book
+          where data_package_id
+          in (
+            select data_package_id
+            from t_business_data_package
+            where business_id = #{companyId}
+            and  data_package_id
+            in
+              <foreach collection="cidList" item="id" separator="," open="(" close=")">
+                #{id}
+              </foreach>
+          )
+        )
+        and book_pdf =1
+    </select>
+
+    <select id="queryCompanyEpubNumberByPackage" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in (
+        select metadata_id
+        from t_data_package_book
+        where data_package_id
+        in (
+        select data_package_id
+        from t_business_data_package
+        where business_id = #{companyId}
+        and  data_package_id
+        in
+        <foreach collection="cidList" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        )
+        and book_epub = 3
+    </select>
+<!--=================================================================================================================-->
+    <select id="getCompanyListByColumn" resultType="com.bfd.param.vo.statisticsvo.ResourceCompanyInfoVO">
+        SELECT id,
+        company_code as companyCode,
+        company_name as companyName,
+        access_key as accessKey,
+        parent_company_id as parentCompanyId,
+        status as status
+        FROM t_company
+        where id in (
+        select
+        business_id as id
+        from
+        t_business_column
+        where
+        column_id in
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        <if test="businessId!=null and businessId != '' ">
+            <![CDATA[ AND parent_company_id = #{businessId}]]>
+        </if>
+        <if test="companyName!=null and companyName != '' ">
+            <![CDATA[ AND company_name LIKE '%${companyName}%']]>
+        </if>
+        ORDER BY  ${sortField} ${sortType}
+    </select>
+
+    <select id="getCompanyColumnNumber" resultType="int">
+        select count(0)
+        from t_business_column
+        where business_id = #{companyId}
+        AND column_id IN
+          <foreach collection="cidList" item="id" separator="," open="(" close=")">
+             #{id}
+          </foreach>
+    </select>
+
+    <select id="queryCompanyBookNumberByColumn" resultType="int">
+        select count(0) from (
+          select *
+          from t_column_book
+          where column_id
+          in (
+            select column_id
+            from t_business_column
+            where business_id = #{companyId}
+            and column_id
+            in
+              <foreach collection="cidList" item="id" separator="," open="(" close=")">
+                  #{id}
+              </foreach>
+          )
+          GROUP BY metadata_id
+        ) t
+    </select>
+
+    <select id="queryCompanyPdfNumberByColumn" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in (
+          select metadata_id
+          from t_column_book
+          where column_id
+          in (
+            select column_id
+            from t_business_column
+            where business_id = #{companyId}
+            and  column_id
+            in
+            <foreach collection="cidList" item="id" separator="," open="(" close=")">
+                #{id}
+            </foreach>
+          )
+        )
+        and book_pdf =1
+    </select>
+
+    <select id="queryCompanyEpubNumberByColumn" resultType="int">
+        select count(0)
+        from t_book_metadata
+        where id
+        in (
+        select metadata_id
+        from t_column_book
+        where column_id
+        in (
+        select column_id
+        from t_business_column
+        where business_id = #{companyId}
+        and  column_id
+        in
+        <foreach collection="cidList" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        )
+        )
+        and book_epub = 3
+    </select>
+
+    <select id="getCompanyByPrivatePackage" resultType="com.bfd.param.vo.statisticsvo.ResourceCompanyInfoVO">
+        SELECT id,
+          company_code as companyCode,
+          company_name as companyName,
+          access_key as accessKey,
+          parent_company_id as parentCompanyId,
+          status as status
+        FROM t_company
+        where id
+        in (
+          select business_id as id
+          from t_private_data_package
+          where id = #{cid}
+        )
+    </select>
+
+    <select id="getCompanyByPrivateColumn" resultType="com.bfd.param.vo.statisticsvo.ResourceCompanyInfoVO">
+        SELECT id,
+        company_code as companyCode,
+        company_name as companyName,
+        access_key as accessKey,
+        parent_company_id as parentCompanyId,
+        status as status
+        FROM t_company
+        where id
+        in (
+        select business_id as id
+        from t_private_column
+        where id = #{cid}
+        )
+    </select>
+<!--=================================================================================================================-->
+    <select id="getPackageAddCompanyTotalByPackage" resultType="int">
+        select count(0) from (
+          select *
+          from t_business_data_package
+          where data_package_id
+          in(
+            select id
+            from t_data_package
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY business_id*/
+        ) t
+    </select>
+
+    <select id="getPackageAddBookTotalByPackage" resultType="int">
+        select count(0) from (
+            select *
+            from t_data_package_book
+            where data_package_id
+            in(
+              select id
+              from t_data_package
+              where parent_id = #{id}
+              or id = #{id}
+            )
+            and create_time &gt;= #{startTime}
+            and create_time &lt;= #{endTime}
+            /*GROUP BY metadata_id*/
+        ) t
+    </select>
+
+    <select id="getPackageUseDetailBookTrend" resultType="java.util.Map">
+        select date_format(t.create_time,'${format}') as time,count(0) as total
+        from (
+          select * from t_data_package_book
+          where data_package_id
+          in(
+            select id
+            from t_data_package
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY metadata_id*/
+        ) t
+        GROUP BY date_format(t.create_time, '${group}')
+    </select>
+
+    <select id="getPackageUseDetailCompanyTrend" resultType="java.util.Map">
+        select date_format(t.create_time,'${format}') as time,count(0) as total
+        from (
+          select * from t_business_data_package
+          where data_package_id
+          in(
+            select id
+            from t_data_package
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY business_id*/
+        ) t
+        GROUP BY date_format(t.create_time, '${group}')
+    </select>
+<!--=================================================================================================================-->
+    <select id="getColumnAddCompanyTotalByColumn" resultType="int">
+        select count(0) from (
+          select *
+          from t_business_column
+          where column_id
+          in(
+            select id
+            from t_column
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY business_id*/
+        ) t
+    </select>
+
+    <select id="getColumnAddBookTotalByColumn" resultType="int">
+        select count(0) from (
+            select *
+            from t_column_book
+            where column_id
+            in(
+              select id
+              from t_column
+              where parent_id = #{id}
+              or id = #{id}
+            )
+            and create_time &gt;= #{startTime}
+            and create_time &lt;= #{endTime}
+           /* GROUP BY metadata_id*/
+        ) t
+    </select>
+
+    <select id="getColumnUseDetailBookTrend" resultType="java.util.Map">
+        select date_format(t.create_time,'${format}') as time,count(0) as total
+        from (
+          select * from t_column_book
+          where column_id
+          in(
+            select id
+            from t_column
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY metadata_id*/
+        ) t
+        GROUP BY date_format(t.create_time, '${group}')
+    </select>
+
+    <select id="getColumnUseDetailCompanyTrend" resultType="java.util.Map">
+        select date_format(t.create_time,'${format}') as time,count(0) as total
+        from (
+          select * from t_business_column
+          where column_id
+          in(
+            select id
+            from t_column
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY business_id*/
+        ) t
+        GROUP BY date_format(t.create_time, '${group}')
+    </select>
+<!--=================================================================================================================-->
+    <select id="getPrivatePackageAddBookTotalByPackage" resultType="int">
+        select count(0) from (
+            select *
+            from t_private_data_package_book
+            where data_package_id
+            in(
+              select id
+              from t_private_data_package
+              where parent_id = #{id}
+              or id = #{id}
+            )
+            and create_time &gt;= #{startTime}
+            and create_time &lt;= #{endTime}
+            /*GROUP BY metadata_id*/
+        ) t
+    </select>
+
+    <select id="getPrivatePackageUseDetailBookTrend" resultType="java.util.Map">
+        select date_format(t.create_time,'${format}') as time,count(0) as total
+        from (
+          select * from t_private_data_package_book
+          where data_package_id
+          in(
+            select id
+            from t_private_data_package
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY metadata_id*/
+        ) t
+        GROUP BY date_format(t.create_time, '${group}')
+    </select>
+<!--=================================================================================================================-->
+    <select id="getPrivateColumnAddBookTotalByColumn" resultType="int">
+        select count(0) from (
+            select *
+            from t_private_column_book
+            where column_id
+            in(
+              select id
+              from t_private_column
+              where parent_id = #{id}
+              or id = #{id}
+            )
+            and create_time &gt;= #{startTime}
+            and create_time &lt;= #{endTime}
+            /*GROUP BY metadata_id*/
+        ) t
+    </select>
+
+    <select id="getPrivateColumnUseDetailBookTrend" resultType="java.util.Map">
+        select date_format(t.create_time,'${format}') as time,count(0) as total
+        from (
+          select * from t_private_column_book
+          where column_id
+          in(
+            select id
+            from t_private_column
+            where parent_id = #{id}
+            or id = #{id}
+          )
+          and create_time &gt;= #{startTime}
+          and create_time &lt;= #{endTime}
+          /*GROUP BY metadata_id*/
+        ) t
+        GROUP BY date_format(t.create_time, '${group}')
+    </select>
+</mapper>

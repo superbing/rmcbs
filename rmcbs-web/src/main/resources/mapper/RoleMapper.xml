@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.RoleMapper" >
+
+	<resultMap id="BaseResultMap" type="com.bfd.bean.RoleBean">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="description" jdbcType="VARCHAR" property="description" />
+		<result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+		<result column="create_user" jdbcType="BIGINT" property="createUser" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+    	id, name, description, create_time, create_user
+  	</sql>
+
+	<insert id="insert" parameterType="com.bfd.bean.RoleBean">
+    insert into t_role (id, name, description, create_time,
+      create_user)
+    values (#{id,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, now(),
+      #{createUser,jdbcType=BIGINT})
+  	</insert>
+
+	<delete id="delete" parameterType="java.lang.Long">
+		delete from t_role
+		where id = #{id,jdbcType=BIGINT}
+  	</delete>
+
+	<update id="update" parameterType="com.bfd.bean.RoleBean">
+		update t_role
+		<set>
+			<if test="name != null">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="description != null">
+				description = #{description,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time = #{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="createUser != null">
+				create_user = #{createUser,jdbcType=BIGINT},
+			</if>
+		</set>
+		where id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="findById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from t_role
+		where id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<select id="findByName" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from t_role
+		where name = #{name}
+	</select>
+
+	<select id="queryList" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from t_role
+		where 1=1
+		<if test="name != null">
+			and name like CONCAT('%',#{name},'%')
+		</if>
+		ORDER BY create_time desc
+	</select>
+
+	<delete id="deleteRoleResource" parameterType="java.lang.Long">
+		delete from t_role_resource
+		where role_id = #{id,jdbcType=BIGINT}
+  	</delete>
+
+	<insert id="addRoleResource">
+		insert into t_role_resource (role_id, resource_id)
+		values (#{roleId,jdbcType=BIGINT}, #{resourceId,jdbcType=BIGINT})
+  	</insert>
+
+	<select id="queryUserRole" resultType="Integer">
+		select
+			count(1)
+		from t_user_role
+		where role_id = #{roleId,jdbcType=BIGINT}
+	</select>
+</mapper>

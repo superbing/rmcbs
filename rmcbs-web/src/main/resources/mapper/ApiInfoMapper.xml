@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bfd.dao.mapper.ApiInfoMapper">
+  <resultMap id="BaseResultMap" type="com.bfd.bean.ApiInfoBean">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="api_type" jdbcType="BIGINT" property="apiType" />
+    <result column="url" jdbcType="VARCHAR" property="url" />
+    <result column="call_method" jdbcType="VARCHAR" property="callMethod" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="in_param" jdbcType="VARCHAR" property="inParam" />
+    <result column="out_param" jdbcType="VARCHAR" property="outParam" />
+    <result column="out_param_desc" jdbcType="VARCHAR" property="outParamDesc" />
+    <result column="call_example" jdbcType="VARCHAR" property="callExample" />
+    <result column="type" jdbcType="INTEGER" property="type" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="auth" jdbcType="INTEGER" property="auth" />
+    <result column="update_time" jdbcType="TIMESTAMP" javaType="java.util.Date" property="updateTime" />
+    <result column="create_time" jdbcType="TIMESTAMP" javaType="java.util.Date" property="createTime" />
+    <result column="create_user" jdbcType="BIGINT" property="createUser" />
+  </resultMap>
+
+  <resultMap id="ResultTreeMap" type="com.bfd.param.vo.ApiTreeVO">
+    <id column="id" property="id" />
+    <result column="typeName" property="typeName" />
+    <collection property="apiVOList" ofType="com.bfd.param.vo.ApiNamesVO">
+      <id column="apiId" property="apiId" />
+      <result column="apiName" property="apiName" />
+    </collection>
+  </resultMap>
+
+  <sql id="Example_Where_Clause">
+    <where>
+      1=1
+      <if test="id != null ">
+        and id = #{id}
+      </if>
+      <if test="name != null and name != '' ">
+        and name like CONCAT('%', #{name}, '%')
+      </if>
+      <if test="apiType != null and apiType != '' ">
+        and api_type = #{apiType}
+      </if>
+      <if test="type != null and type != '' ">
+        and type = #{type}
+      </if>
+      <if test="url != null and url != '' ">
+        and url = #{url}
+      </if>
+      <if test="status != null">
+        and status = #{status}
+      </if>
+    </where>
+  </sql>
+
+  <sql id="Base_Column_List">
+    id, name, api_type, url, call_method, description, in_param, out_param, out_param_desc, call_example,
+   	status,type, auth, update_time, create_time, create_user
+  </sql>
+
+  <select id="queryList" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_api_info
+    <include refid="Example_Where_Clause" />
+    ORDER BY create_time desc
+  </select>
+
+  <select id="getApiTotal" resultType="Long">
+    select
+    count(0)
+    from t_api_info
+  </select>
+
+  <select id="queryApi" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_api_info
+    WHERE status = #{status}
+  </select>
+
+  <select id="queryAllApi" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_api_info
+  </select>
+
+  <select id="getApiByType" resultMap="BaseResultMap">
+    select
+      id,
+      name
+    from
+      t_api_info
+    where
+      api_type = #{type}
+  </select>
+
+  <select id="getApiTree" resultMap="ResultTreeMap">
+    select
+      tat.id AS id,
+      tat.type_name AS typeName,
+	  tai.id AS apiId,
+	  tai.name AS apiName
+    from
+      t_api_type tat LEFT JOIN t_api_info tai ON tat.id = tai.api_type
+    <if test="ids != null">
+      where tai.id in
+      <foreach collection="ids" item="id" separator="," open="(" close=")">
+        #{id}
+      </foreach>
+    </if>
+
+  </select>
+
+  <select id="getApiTypeUrl" resultType="com.bfd.param.vo.edgesighvo.CompanySightDTO">
+    SELECT
+      tai.id AS id,
+      tai.`name` AS name,
+      tat.url AS typeUrl,
+      tai.url AS url
+    FROM
+        t_api_info tai
+    LEFT JOIN t_api_type tat ON tai.api_type = tat.id
+    WHERE tai.id = #{apiId}
+  </select>
+
+  <select id="getApiList" resultType="com.bfd.param.vo.ApiVo">
+    select
+      id,
+      name,
+      api_type AS apiType,
+      type,
+      url,
+      description,
+      status,
+      auth
+    from t_api_info
+    where
+      1 = 1
+    <if test="name != null and name != ''">
+       AND name like CONCAT(#{name}, '%')
+    </if>
+    <if test="type != null">
+       AND type = #{type}
+    </if>
+  </select>
+
+  <select id="getApiById" resultType="com.bfd.param.vo.ApiVo">
+    select
+      ta.id AS id,
+      ta.name AS name,
+      ta.api_type AS apiType,
+      ta.url AS url,
+      ta.description AS description,
+      ta.status AS status,
+      ta.auth AS auth
+    from t_api_info ta
+    LEFT JOIN t_business_api tb ON  ta.id = tb.api_id
+    <if test="id != null">
+      where tb.business_id = #{id}
+    </if>
+  </select>
+
+  <select id="getApiByUrls" resultType="com.bfd.param.vo.edgesighvo.ApiSightVO">
+    SELECT
+      tai.id as id,
+      tai.`name` as name,
+      tai.url as url,
+      tat.type_name as typeName
+    FROM
+        t_api_info tai
+    LEFT JOIN t_api_type tat
+    ON tai.api_type = tat.id
+    where tai.url in
+    <foreach collection="urls" item="url"  separator="," open="(" close=")">
+      #{url}
+    </foreach>
+  </select>
+
+  <select id="findById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+     from t_api_info
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <select id="findByUrl" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+     from t_api_info
+    where url = #{url}
+  </select>
+
+  <select id="findByName" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+     from t_api_info
+    where name = #{name}
+  </select>
+
+  <delete id="delete" parameterType="java.lang.Long">
+    delete from t_api_info
+    where id = #{id, jdbcType=BIGINT}
+  </delete>
+
+  <insert id="insert" parameterType="com.bfd.bean.ApiInfoBean">
+    insert into t_api_info 
+    	(name,
+    	 api_type,
+    	 url, 
+    	 call_method,
+    	 description,
+    	 in_param,
+    	 out_param,
+    	 out_param_desc,
+    	 call_example,
+    	 status,
+    	 type,
+    	 auth,
+     	 update_time,
+     	 create_time, 
+     	 create_user
+      )
+    values 
+    (#{name}, 
+     #{apiType}, 
+     #{url}, 
+     #{callMethod},
+     #{description}, 
+     #{inParam},
+     #{outParam},
+     #{outParamDesc},
+     #{callExample},
+     #{status},
+     #{type},
+     #{auth},
+      now(),
+      now(), 
+      #{createUser,jdbcType=BIGINT}
+      )
+  </insert>
+
+  <update id="update" parameterType="com.bfd.bean.ApiInfoBean">
+    update t_api_info
+    <set>
+      <if test="name != null and name != '' ">
+        name = #{name},
+      </if>
+      <if test="apiType != null">
+        api_type = #{apiType},
+      </if>
+      <if test="url != null and url !='' ">
+        url = #{url},
+      </if>
+      <if test="callMethod != null">
+        call_method = #{callMethod},
+      </if>
+      description = #{description},
+      <if test="inParam != null">
+      	in_param = #{inParam},
+      </if>
+      <if test="outParam != null">
+      	out_param = #{outParam},
+      </if>
+      <if test="outParamDesc != null">
+     	out_param_desc = #{outParamDesc},
+      </if>
+      <if test="callExample != null">
+      	call_example = #{callExample},
+      </if>
+      <if test="status != null ">
+      	status = #{status},
+      </if>
+      <if test="type != null ">
+        type = #{type},
+      </if>
+      <if test="auth != null ">
+      	auth = #{auth},
+      </if>
+      update_time = now()
+    </set>
+    where id = #{id}
+  </update>
+
+  <update id="updateStatus">
+    update t_api_info
+    <set>
+    <if test="status != null">
+      status = #{status},
+    </if>
+    </set>
+    where id = #{id}
+  </update>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.DrmManageMapper" >
+	
+	<!-- 根据单位id查询元数据唯一标识列表-->
+	<select id="getUniqueIdListByCompanyId" parameterType="long" resultType="string">
+		SELECT DISTINCT uniqueId 
+		  FROM (
+		  SELECT t3.id AS companId, t4.metadata_id AS metadataId, t5.unique_id AS uniqueId
+		    FROM 
+		    (
+		     SELECT t.id, t2.data_package_id 
+		       FROM t_company t LEFT JOIN t_business_data_package t2 ON t.id = t2.business_id 
+		        <![CDATA[ WHERE t.parent_company_id <> 0 AND t.id = #{value} ]]>
+		    ) t3
+		  JOIN t_data_package_book t4 ON t3.data_package_id = t4.data_package_id
+		  JOIN t_book_metadata t5 ON t4.metadata_id = t5.id
+		  UNION ALL
+		  SELECT t3.id AS companId, t4.metadata_id AS metadataId, t5.unique_id AS uniqueId
+		    FROM 
+		   (
+		    SELECT t.id, t2.id packageId
+		      FROM t_company t LEFT JOIN t_private_data_package t2 ON t.id = t2.business_id 
+		      <![CDATA[ WHERE t.parent_company_id <> 0 AND t.id = #{value} AND t2.parent_id <>0 ]]>
+		    ) t3
+		    JOIN t_private_data_package_book t4 ON t3.packageId = t4.data_package_id
+		    JOIN t_book_metadata t5 ON t4.metadata_id = t5.id
+		 ) t
+	</select>
+</mapper>

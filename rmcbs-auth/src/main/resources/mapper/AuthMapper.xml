@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bfd.dao.mapper.AuthMapper">
+
+    <select id="getClient" resultType="com.bfd.bean.CompanyBean">
+        SELECT
+          t_company.id AS businessId,
+          t_company.company_code AS companyCode,
+          t_company.status,
+          t_company.parent_company_id AS companyId,
+          t_company.access_key AS accessKey,
+          t_business_units.start_time AS startTime,
+          t_business_units.end_time AS endTime
+        FROM t_company
+        LEFT JOIN t_business_units
+        ON t_company.id = t_business_units.business_id
+        WHERE t_company.company_code = #{clientId}
+        and t_company.access_key = #{secret}
+    </select>
+
+    <select id="queryAuth" resultType="com.bfd.bean.ApiBean">
+      SELECT
+        t_api_info.id AS apiId,
+        t_api_info.url,
+        t_api_info.api_type AS apiType,
+        t_business_api.business_id AS businessId
+      FROM t_api_info
+      LEFT JOIN t_business_api
+      ON t_api_info.id = t_business_api.api_id
+      and t_business_api.business_id = #{businessId}
+      where t_api_info.status = 1
+    </select>
+
+    <select id="getApiInfoByUrl" resultType="com.bfd.bean.ApiBean">
+      SELECT
+        t_api_info.id AS apiId,
+        t_api_info.api_type AS apiType,
+        IFNULL(t_company.id,0) AS businessId,
+        IFNULL(t_company.parent_company_id,0) AS companyId
+      FROM t_api_info
+      LEFT JOIN t_company
+      ON t_company.company_code=#{companyCode}
+      WHERE t_api_info.status = 1
+      AND t_api_info.url = #{url}
+    </select>
+</mapper>
